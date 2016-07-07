@@ -1,0 +1,41 @@
+>>> with open("/dev/mem", "r+b") as fd:
+...     mem = mmap.mmap(fd.fileno(),length=32,offset=0x3f804000)
+
+>>> import time,struct
+>>> reg = struct.unpack("<L",mem[0:4])[0]
+>>> print reg
+0
+>>> reg = struct.unpack("<L",mem[4:8])[0]
+>>> print reg
+80
+>>> reg = struct.unpack("<L",mem[8:12])[0]
+>>> print reg
+1
+>>> reg = struct.unpack("<L",mem[12:16])[0]
+>>> print reg
+56
+>>> reg = struct.unpack("<L",mem[16:20])[0]
+>>> print reg
+56
+>>> reg = struct.unpack("<L",mem[20:24])[0]
+>>> print reg
+2500
+>>> reg = struct.unpack("<L",mem[24:28])[0]
+>>> print reg
+3145776
+>>> reg = struct.unpack("<L",mem[28:32])[0]
+>>> print reg
+64
+>>> reg = struct.unpack("<L",mem[0:4])[0]
+>>> print reg
+0
+>>> reg = struct.unpack("<L",mem[12:16])[0]
+>>> print hex(reg)
+0x38
+>>> reg = struct.unpack("<L",mem[4:8])[0]
+>>> print hex(reg)
+0x50
+>>> reg = struct.unpack("<L",mem[0:4])[0]
+>>> print hex(reg)
+0x0
+>>>

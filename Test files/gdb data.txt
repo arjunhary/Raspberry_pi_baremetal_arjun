@@ -1,0 +1,180 @@
+arm-none-eabi-gdb -ex "target remote localhost:3333" display.elf
+
+.space 0x200000-4,0
+
+
+SPI
+display/x  *((int*)0x3f204000)
+display/x  *((int*)0x3F20400C)
+display/x  *((int*)0x3f204014)
+
+display/x  *((int*)0xff204000)
+
+watch *((int*)0x3f204000)
+watch -l *(int*)0x3f204000
+watch *0x3f204000
+awatch *0x3f204000
+
+    mov r1,#0x0000
+
+	;.globl GET32
+;GET32:
+;    ldr r0,[r0]
+;    bx lr
+
+watch *0x00100000
+watch *0xC0100000
+watch *0x40100000
+watch *0x80100000
+
+0x3F00B000
+
+set {char}0x3f204004 = 0x29
+
+watch *0x3F00B208
+
+.globl GET32
+GET32:
+    ldr r0,[r0]
+    bx lr
+
+display  ((unsigned int)0x3F200034)
+
+GPIO
+display/x  *((int*)0x3F200034)
+display/x  *((int*)0x3F200040)
+display/x  *((int*)0x3F200044)
+display/x  *((int*)0x3F20007C)
+display/x  *((int*)0x3F200088)
+
+0x3F00300C
+display/x  *((int*)0x3F003000)
+display/x  *((int*)0x3F00300C)
+
+    ;@ SVC MODE, IRQ ENABLED, FIQ DIS
+    ;@mov r0,#0x53
+    ;@msr cpsr_c, r0
+
+Interrupt
+display/x  *((int*)0x3F00B200)
+display/x  *((int*)0x3F00B204)
+display/x  *((int*)0x3F00B208)
+display/x  *((int*)0x3F00B210)
+display/x  *((int*)0x3F00B214)
+display/x  *((int*)0x3F00B218)
+display/x  *((int*)0x3F00B21C)
+display/x  *((int*)0x3F00B220)
+
+display/x  *((int*)0x80010000)
+display/x  *((int*)0x80012000)
+display/x  *((int*)0x80014000)
+display/x  *((int*)0x80016000)
+
+display/x  *((int*)0x00010000)
+display/x  *((int*)0x00012000)
+display/x  *((int*)0x00014000)
+display/x  *((int*)0x00016000)
+
+I2C
+display/x  *((int*)0x3F205000)
+display/x  *((int*)0x3F205004)
+display/x  *((int*)0x3F205008)
+display/x  *((int*)0x3F20500C)
+display/x  *((int*)0x3F205014)
+display/x  *((int*)0x3F205018)
+display/x  *((int*)0x3F20501C)
+
+SPI
+display/x  *((int*)0x3F204000)
+display/x  *((int*)0x3F204008)
+display/x  *((int*)0x3F20400C)
+display/x  *((int*)0x3F204010)
+display/x  *((int*)0x3F204014)
+
+
+set *(char *) 0x3F204004 = 0x29
+
+display/x  *((int*)0x3F007000)
+display/x  *((int*)0x3F007020)
+
+
+
+DMA channel 1 and DMA channel 0
+
+display/x  *((int*)0x3F007100)
+display/x  *((int*)0x3F807104)
+display/x  *((int*)0x3F807108)
+display/x  *((int*)0x3F00710c)
+display/x  *((int*)0x3F007110)
+display/x  *((int*)0x3F007114)
+display/x  *((int*)0x3F007120)
+display/x  *((int*)0x3F007000)
+display/x  *((int*)0x3F807004)
+display/x  *((int*)0x3F807008)
+display/x  *((int*)0x3F00700c)
+display/x  *((int*)0x3F007010)
+display/x  *((int*)0x3F007014)
+display/x  *((int*)0x3F007020)
+
+
+display/x  *((int*)0x3F007FF0)
+
+
+
+display/x  *((int*)0x33)
+
+x/64xb 0x00100000
+x/64xb 0x00101000
+x/64xb 0x00102000
+x/64xb 0x00103000
+
+x/64xb 0xC0100000
+x/64xb 0xC0101000
+x/64xb 0xC0102000
+x/64xb 0xC0103000
+
+x/64xb 0x00100000
+
+x/64xb 0x40100000
+x/64xb 0x40101000
+x/64xb 0x40102000
+x/64xb 0x40103000
+
+x/64xb 0x50000000
+x/64xb 0x90000000
+
+x/64xb 0x33
+
+0x3F804000
+
+display/x  *((int*)0x3F804010)
+
+display/x (char [32786]) buf
+
+153600
+
+;.globl PUT32
+;PUT32:
+;    str r1,[r0]
+;    bx lr
+
+arm core_state
+reg
+mdw 0x3f204000 1
+
+.globl Read_ARM_Auxiliary_Control_Register
+Read_ARM_Auxiliary_Control_Register:
+	mrc p15, 0, r0, c1, c0, 1
+	bx lr
+	
+.globl Read_ARM_System_Control_Register
+Read_ARM_System_Control_Register:	
+	mrc p15, 0, r0, c1, c0, 0
+	bx lr
+
+.globl Read_Watchpoint_control_Register0
+Read_Watchpoint_control_Register0:		
+	mrc p14, 0, r0, c0, c1, 7
+	bx lr
+	
+display/x  *((short*)y)	
