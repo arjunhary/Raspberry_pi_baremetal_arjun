@@ -2,6 +2,8 @@ arm-none-eabi-gdb -ex "target remote localhost:3333" display.elf
 
 .space 0x200000-4,0
 
+	cortex_a dbginit
+
 
 SPI
 display/x  *((int*)0x3f204000)
@@ -47,6 +49,10 @@ display/x  *((int*)0x3F200044)
 display/x  *((int*)0x3F20007C)
 display/x  *((int*)0x3F200088)
 
+display/x  *((int*)0x3f200010)
+display/x  *((int*)0x3F200020)
+display/x  *((int*)0x3F20002C)
+
 0x3F00300C
 display/x  *((int*)0x3F003000)
 display/x  *((int*)0x3F00300C)
@@ -91,13 +97,14 @@ display/x  *((int*)0x3F20400C)
 display/x  *((int*)0x3F204010)
 display/x  *((int*)0x3F204014)
 
+display/x  *((int*)0x3F204004)
 
 set *(char *) 0x3F204004 = 0x29
 
 display/x  *((int*)0x3F007000)
 display/x  *((int*)0x3F007020)
 
-
+set *((int *) 0x3F204004) = 0
 
 DMA channel 1 and DMA channel 0
 
@@ -147,9 +154,10 @@ x/64xb 0x33
 
 0x3F804000
 
-display/x  *((int*)0x3F804010)
+display/x  *((int*)0x00103000)
 
 display/x (char [32786]) buf
+display/x (char [512]) 0x00103000
 
 153600
 
@@ -178,3 +186,9 @@ Read_Watchpoint_control_Register0:
 	bx lr
 	
 display/x  *((short*)y)	
+
+fiq:
+    push {r0,r1,r2,r3,r4,r5,r6,r7,lr}
+    bl c_fiq_handler
+    pop  {r0,r1,r2,r3,r4,r5,r6,r7,lr}
+    subs pc,lr,#4	

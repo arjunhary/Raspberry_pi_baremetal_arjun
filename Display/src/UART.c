@@ -4,6 +4,7 @@
 #include "./../include/interrupts.h"
 #include "./../include/utility.h"
 
+#define MAX_DIGITS_IN_32_BIT_NUMBER 10
 unsigned char uart_buf[UART_BUF_SIZE];
 
 unsigned char calc_checksum(unsigned char* ptr,int number_of_bytes)
@@ -134,7 +135,7 @@ void uart_print_number(int num)
 {
 	int index = 0;
 	int i = 0;
-	char num_to_char[10]= {'0','0','0','0','0','0','0','0','0','0'};
+	char num_to_char[MAX_DIGITS_IN_32_BIT_NUMBER]= {'0','0','0','0','0','0','0','0','0','0'};
 	if(num == 0)
 	{
 		uart_putchar('0');
@@ -162,6 +163,7 @@ void uart_print_number(int num)
 int uart_recvchar(unsigned char* data,unsigned int timeout_ms)
 {
 	volatile AUX_MU_STAT_Reg_t MUstatus;
+	MUstatus.mAsU32 = 0;
 	unsigned int start_tick = GET32(SYSTEM_TIMER_CL0_REG_LSB);
 	
 	AUX_MU_IO_Reg_t MUIoReg;	
@@ -218,7 +220,7 @@ int wait_till_transmitter_done(void)
 int UART_disable_transmitter_and_receiver(void)
 {
 	//Disable transmitter and receiver
-	volatile AUX_MU_CNTL_Reg_t cntrlreg;
+	AUX_MU_CNTL_Reg_t cntrlreg;
 	cntrlreg = (AUX_MU_CNTL_Reg_t)GET32(AUX_MU_CNTL_REG);
 	cntrlreg.mbits.receiver_enable = 0;
 	cntrlreg.mbits.transmitter_enable = 0;
@@ -228,7 +230,7 @@ int UART_disable_transmitter_and_receiver(void)
 
 int UART_enable_transmitter_and_receiver(void)
 {
-	volatile AUX_MU_CNTL_Reg_t cntrlreg;
+	AUX_MU_CNTL_Reg_t cntrlreg;
 	//Enable transmitter and receiver
 	cntrlreg = (AUX_MU_CNTL_Reg_t)GET32(AUX_MU_CNTL_REG);
 	cntrlreg.mbits.receiver_enable = 1;
@@ -240,7 +242,7 @@ int UART_enable_transmitter_and_receiver(void)
 int UART_clear_FIFOs(void)
 {
 	//Clear the FIFOs
-	volatile AUX_MU_IIR_Reg_t IIRReg;
+	AUX_MU_IIR_Reg_t IIRReg;
 	IIRReg = (AUX_MU_IIR_Reg_t)GET32(AUX_MU_IIR_REG);
 	IIRReg.mbits.Interrupt_ID = 3;
 	IIRReg.mbits.fifo_enables = 3;
@@ -257,7 +259,7 @@ int UARTInit(void)
 	PUT32(AUX_ENABLE_REG,auxenablereg.mAsU32);
 	
 	//Select Alternate function 5 for GPIO14 and 15
-	volatile GPIO_Funtion_Select1_t gpiofnsel1;
+	GPIO_Funtion_Select1_t gpiofnsel1;
 	gpiofnsel1 = (GPIO_Funtion_Select1_t)GET32(GPIO_REG_GPFSEL1);
 	gpiofnsel1.mBits.FunctionSelGPIO14 = GPIO_SET_alternate_function_5;
 	gpiofnsel1.mBits.FunctionSelGPIO15 = GPIO_SET_alternate_function_5;
@@ -267,7 +269,7 @@ int UARTInit(void)
 	UART_disable_transmitter_and_receiver();
 	
 	//Clear Interrrupts
-	volatile AUX_MU_IER_Reg_t IERReg;
+	AUX_MU_IER_Reg_t IERReg;
 	IERReg = (AUX_MU_IER_Reg_t)GET32(AUX_MU_IER_REG);
 	IERReg.Interrupt_bits.Enable_transmit_intr = 0;
 	IERReg.Interrupt_bits.Enable_receive_intr  = 0;
@@ -277,14 +279,14 @@ int UARTInit(void)
 	UART_clear_FIFOs();
 	
 	//Set the data size to 8 bit
-	volatile AUX_MU_LCR_Reg_t LCRReg;
+	AUX_MU_LCR_Reg_t LCRReg;
 	LCRReg = (AUX_MU_LCR_Reg_t)GET32(AUX_MU_LCR_REG);
 	LCRReg.mbits.data_size = 3;
 	LCRReg.mbits.dlab_acess = 0;
 	PUT32(AUX_MU_LCR_REG,LCRReg.mAsU32);
 	
 	//Set the baud rate to 115200
-	volatile AUX_MU_BAUD_RATE_Reg_t baudreg;
+	AUX_MU_BAUD_RATE_Reg_t baudreg;
 	baudreg = (AUX_MU_BAUD_RATE_Reg_t)GET32(AUX_MU_BAUD_REGISTER);
 	baudreg.mbits.baud_rate = 270; //115200 baud rate
 	PUT32(AUX_MU_BAUD_REGISTER,baudreg.mAsU32);
@@ -303,7 +305,7 @@ int xmodem_send(void*ptr , int byte_count)
 	{
 		if(uart_recvchar(&temp,1000) == 0)
 		{
-			if(temp == NAK)
+			if(temp == XMODEM_NAK)
 			{
 				break;
 			}
@@ -312,6 +314,12 @@ int xmodem_send(void*ptr , int byte_count)
 		
 	return 0;
 }
+
+void flush_uart_rx_buffer(void) {
+    unsigned char c;
+    while (uart_recvchar(&c, 100) == 0);
+}
+
 
 int xmodem_recv(void* recv_ptr)
 {
@@ -322,55 +330,70 @@ int xmodem_recv(void* recv_ptr)
 
 	LEDTurnon();
 
+
 	//Wait till we receive a character
 	while(1)
 	{		
-		uart_recvchar(&uart_buf[0],3000);
+		uart_recvchar(&uart_buf[0],10000);
 		
-		if(uart_buf[0] == SOH)
+		if(uart_buf[0] == XMODEM_SOH)
 		{
-			SOH_received = 0;
+			SOH_received = 1;
 			while(char_index < UART_BUF_SIZE)
 			{
 				if(uart_recvchar(&uart_buf[char_index],1000) == 0)
 				{
 					char_index++;
 				}
+				else
+				{
+					break;
+				}
 			}
-			//At this point we have the whole packet
+			//At this point we have the whole packet or we dont
 			if((uart_buf[1] ==seq_num) && (uart_buf[2] == (unsigned char)(~seq_num)) && (uart_buf[131] == (calc_checksum(&uart_buf[3],XMODEM_PAYLOAD_SIZE))))
 			{
+				SOH_received = 0;
 				seq_num++;
 				char_index = 1;				
 				memcpy((recv_ptr+byte_count),&uart_buf[3],XMODEM_PAYLOAD_SIZE);
 				byte_count += XMODEM_PAYLOAD_SIZE;
 				init_uart_buf();
-				uart_putchar(ACK);
+				uart_putchar(XMODEM_ACK);
 			}
 			else
 			{
+				SOH_received = 0;
 				char_index = 1;
 				init_uart_buf();
-				uart_putchar(NAK);
+				flush_uart_rx_buffer();
+				uart_putchar(XMODEM_NAK);
 			}
 		}
-		else if(uart_buf[0] == EOT)
+		else if(uart_buf[0] == XMODEM_EOT)
 		{
 			LEDTurnoff();
-			uart_putchar(ACK);
+			uart_putchar(XMODEM_ACK);
 			SOH_received = -1;
 			return byte_count;
 		}
+		else if(uart_buf[0] == XMODEM_CAN)
+		{
+			char_index = 1;
+			seq_num = 1;
+			byte_count = 0;
+			uart_putchar(XMODEM_ACK);
+			SOH_received = -1;
+		}
 		else if(SOH_received == -1)
 		{
-			uart_putchar(NAK);
+			uart_putchar(XMODEM_NAK);
 		}
 	}
 	
 	return 0;
 	
 }
-
 int uart_tests(void)
 {
 	uart_print_string_newline("ABCDEFGHIJKLMNOPQRSTUVWXYZ");

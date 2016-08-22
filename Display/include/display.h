@@ -133,7 +133,7 @@ typedef union __attribute__((packed)) _ILI9341_Mem_Access_Control_Reg_t_t
     unsigned char   mAsU8;
 } ILI9341_Mem_Access_Control_Reg_t;
 
-
+void ili9341_init_tft_display(void);
 int ili9341_getid(unsigned char*ptr);
 unsigned short ili9341_get_width();
 unsigned short ili9341_get_height();
@@ -153,6 +153,6 @@ int ili9341_scroll(void);
 void ili9341_fill_color(short x0, short y0, short x1, short y1,int color);
 void ili9341_fill_color_dma(short x0, short y0, short x1, short y1,int color);
 void ili9341_turn_display_off(void);
-
+int ili9341_get_screen_memory(short x0, short y0, short x1, short y1);
 
 #endif

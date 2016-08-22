@@ -8,27 +8,27 @@ unsigned char uart_buf[UART_BUF_SIZE];
 
 void SET_BREAKPOINT(void)
 {
-		__asm__("BKPT");
+	__asm__("BKPT");
 }
 
 
 void arm_jtag_init(void)
 {
 	//Select alt fn 5 for gpio4,gpio5
-	volatile GPIO_Funtion_Select0_t gpiofnsel0;
+	GPIO_Funtion_Select0_t gpiofnsel0;
 	gpiofnsel0 = (GPIO_Funtion_Select0_t)GET32(GPIO_REG_GPFSEL0);
 	gpiofnsel0.mBits.FunctionSelGPIO4 = GPIO_SET_alternate_function_5;
 	gpiofnsel0.mBits.FunctionSelGPIO5 = GPIO_SET_alternate_function_5;
 	PUT32(GPIO_REG_GPFSEL0,gpiofnsel0.mAsU32);
 	
 	//Select alt fn 5 for gpio13
-	volatile GPIO_Funtion_Select1_t gpiofnsel1;
+	GPIO_Funtion_Select1_t gpiofnsel1;
 	gpiofnsel1 = (GPIO_Funtion_Select1_t)GET32(GPIO_REG_GPFSEL1);
 	gpiofnsel1.mBits.FunctionSelGPIO13 = GPIO_SET_alternate_function_5;
 	PUT32(GPIO_REG_GPFSEL1,gpiofnsel1.mAsU32);
 	
 	//Alt fn 4 for 22,27
-	volatile GPIO_Funtion_Select2_t gpiofnsel2;
+	GPIO_Funtion_Select2_t gpiofnsel2;
 	gpiofnsel2 = (GPIO_Funtion_Select2_t)GET32(GPIO_REG_GPFSEL2);
 	gpiofnsel2.mBits.FunctionSelGPIO22 = GPIO_SET_alternate_function_4;
 	gpiofnsel2.mBits.FunctionSelGPIO27 = GPIO_SET_alternate_function_4;
@@ -61,6 +61,19 @@ void memcpy(void* dest,void *src,int length)
 	
 }
 
+void memfill_pattern(void* dest,char* src,int length_in_bytes, int pattern_length_in_bytes)
+{
+	int i=0,j=0;
+	char* char_ptr = (char*)dest;
+	for(i=0;i< (length_in_bytes/pattern_length_in_bytes);i++)
+	{
+		for(j=0;j<pattern_length_in_bytes;j++)
+		{
+			char_ptr[j+i]=src[j];
+		}
+	}
+}
+
 void memset(void* ptr,char value,int length_in_bytes)
 {
 	int i=0;
@@ -69,7 +82,6 @@ void memset(void* ptr,char value,int length_in_bytes)
 	{
 		char_ptr[i]=value;
 	}
-	
 }
 
 int get_current_time(void)
@@ -126,6 +138,35 @@ int LEDTurnoff(void)
 	GPIOClearReg1.mBits.ClearGPIO47 = 1;
 	PUT32(GPIO_REG_GPCLR1,GPIOClearReg1.mAsU32);
 	return 0;
+}
+
+void print_arm_sys_ctrl_register(void)
+{
+	unsigned int arm_sys_ctrl_reg = Read_ARM_System_Control_Register();
+	uart_print_string_newline("ARM SYS CTRL REG:");
+	uart_print_number_int_hex(arm_sys_ctrl_reg);
+}
+
+void print_arm_registers(void)
+{
+	unsigned int arm_aux_ctrl_reg = Read_ARM_Auxiliary_Control_Register();
+	unsigned int arm_sys_ctrl_reg = Read_ARM_System_Control_Register();
+	unsigned int arm_watchpoint_ctrl_reg = Read_Watchpoint_control_Register0();	
+	unsigned int arm_breakpoint_ctrl_reg  = Read_Breakpoint_control_Register0();
+	unsigned int arm_interrupt_reg  = Read_Interrupt_status_Register();
+	unsigned int arm_cpsr_reg = Read_CPSR_Register();
+	uart_print_string_newline("ARM SYS CTRL REG:");
+	uart_print_number_int_hex(arm_sys_ctrl_reg);
+	uart_print_string_newline("ARM WATCHPOINT CTRL REG:");
+	uart_print_number_int_hex(arm_watchpoint_ctrl_reg);
+	uart_print_string_newline("ARM BREAKPOINT CTRL REG:");
+	uart_print_number_int_hex(arm_breakpoint_ctrl_reg);
+	uart_print_string_newline("ARM AUX CTRL REG:");
+	uart_print_number_int_hex(arm_aux_ctrl_reg);
+	uart_print_string_newline("ARM CPSR REG:");
+	uart_print_number_int_hex(arm_cpsr_reg);
+	uart_print_string_newline("ARM INTR REG:");
+	uart_print_number_int_hex(arm_interrupt_reg);
 }
 
 

@@ -1,6 +1,7 @@
 #include "./../include/I2C.h"
 #include "./../include/Ft6206_cap_touch.h"
 #include "./../include/utility.h"
+#include "./../include/MiniUART.h"
 
 short touch_x0= 0;
 short touch_y0= 0;

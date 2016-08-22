@@ -16,6 +16,35 @@
 #define AUX_MU_STAT_REG				MINI_UART_BASE+0x24
 #define AUX_MU_BAUD_REGISTER		MINI_UART_BASE+0x28
 
+int UARTInit(void);
+int xmodem_recv(void*ptr);
+int xmodem_send(void*ptr, int byte_count);
+int uart_recvchar(unsigned char* data,unsigned int timeout_ms);
+void uart_putchar(unsigned char c);
+void uart_print_string(char* str);
+void uart_print_number(int num);
+void uart_print_number_int_hex(unsigned int num);
+void uart_print_string_newline(char* str);
+int UART_disable_transmitter_and_receiver(void);
+int UART_enable_transmitter_and_receiver(void);
+int UART_clear_FIFOs(void);
+int wait_till_transmitter_done(void);
+void flush_uart_rx_buffer(void);
+int uart_tests(void);
+void init_uart_buf(void);
+
+
+//xmodem enums
+enum xmodem_chars
+{
+	XMODEM_SOH = 0x01,
+	XMODEM_EOT = 0x04,
+	XMODEM_ACK = 0x06,
+	XMODEM_NAK = 0x15,
+	XMODEM_ETB = 0x17,
+	XMODEM_CAN = 0x18,
+};
+
 typedef union __attribute__((packed)) _AUX_Enable_Reg_t
 {
     struct
@@ -178,3 +207,4 @@ typedef union __attribute__((packed)) _AUX_MU_BAUD_RATE_Reg_t
     } mbits;  
     unsigned int   mAsU32;
 } AUX_MU_BAUD_RATE_Reg_t;
+

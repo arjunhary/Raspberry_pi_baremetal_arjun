@@ -16,6 +16,18 @@
 #define AUX_MU_STAT_REG				MINI_UART_BASE+0x24
 #define AUX_MU_BAUD_REGISTER		MINI_UART_BASE+0x28
 
+//xmodem enums
+
+enum xmodem_chars
+{
+	XMODEM_SOH = 0x01,
+	XMODEM_EOT = 0x04,
+	XMODEM_ACK = 0x06,
+	XMODEM_NAK = 0x15,
+	XMODEM_ETB = 0x17,
+	XMODEM_CAN = 0x18,
+};
+
 typedef union __attribute__((packed)) _AUX_Enable_Reg_t
 {
     struct

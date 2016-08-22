@@ -4,8 +4,8 @@
 #include "./../include/SPI.h"
 #include "./../include/display.h"
 #include "./../Image/a-img.h"
-#include "./../Image/f-img.h"
-#include "./../Image/atoz-img.h"
+//#include "./../Image/f-img.h"
+//#include "./../Image/atoz-img.h"
 #include "./../include/I2C.h"
 #include "./../fonts/Arial15x15.h"
 #include "./../fonts/Terminal_font_16.h"
@@ -15,6 +15,7 @@
 #include "./../include/SystemTimer.h"
 
 
+#define ILI9341_SPI_CHIP_SELECT 0
 
 #if defined(BITS_PER_PIXEL_18)
 unsigned char color_rgb_values[][BYTES_PER_PIXEL] = {
@@ -52,6 +53,7 @@ unsigned char color_rgb_values[][BYTES_PER_PIXEL] = {
 unsigned char test_id[4]={'0'};
 unsigned int time_ms = 2000;
 
+unsigned char TFT_Screen_frambuffer_test[512];
 unsigned char TFT_Screen_frambuffer[TFT_SCREEN_BUFFER_SIZE_DMA];
 
 //TFT screen and width
@@ -100,6 +102,19 @@ void init_frame_buffer(void)
 	}
 }
 
+int ili9341_get_screen_memory(short x0, short y0, short x1, short y1)
+{
+	int size = 0;
+	ili9341_set_addr_window(x0,y0,x1,y1);
+	size = (((x1-x0)+1)*((y1-y0)+1)*BYTES_PER_PIXEL);
+	unsigned char ptr[1];
+	spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_MEMORY_READ,0,ptr);
+	spi_getbytes(ILI9341_SPI_CHIP_SELECT,TFT_Screen_frambuffer_test, 512);
+	
+	
+	return 0;
+}
+
 unsigned short ili9341_get_font_height()
 {
 	return font_height;
@@ -131,14 +146,14 @@ int ili9341_getid(unsigned char*ptr)
 	data_ptr[0] = 0x12;
 	spi_sendcommand(0xD9,1,data_ptr);*/
 	memset((char *)ptr,0x00,4);
-	spi_sendreadcommand(ILI9341_CMD_READ_DISPLAY_IDENTIFICATION_INFORMATION, 4, &ptr[0]);
+	spi_sendreadcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_READ_DISPLAY_IDENTIFICATION_INFORMATION, 4, &ptr[0]);
 	return 0;
 }
 
 void ili9341_turn_display_off(void)
 {
 	unsigned char ptr[1];
-	spi_sendcommand(ILI9341_CMD_SLEEP_OUT,0,ptr);
+	spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_SLEEP_OUT,0,ptr);
 	time_sleep(120);
 }
 
@@ -146,9 +161,9 @@ void ili9341_init_tft_display()
 {
 	unsigned char ptr[10];
 	memset((char*)ptr,0x00,10);
-	spi_sendcommand(ILI9341_CMD_NOP,0,ptr);
+	spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_NOP,0,ptr);
 	time_sleep(120);
-	spi_sendcommand(ILI9341_CMD_SOFTWARE_RESET,0,ptr);
+	spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_SOFTWARE_RESET,0,ptr);
 	time_sleep(120);
 	
 	/*ptr[0] = 0x03;
@@ -234,13 +249,13 @@ void ili9341_init_tft_display()
 	// COLMOD: Pixel Format Set
 	// 16 bits/pixel
 	ptr[0] = PIXEL_FORMAT_SET;
-	spi_sendcommand(ILI9341_CMD_PIXEL_FORMAT_SET, 1, ptr);
+	spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_PIXEL_FORMAT_SET, 1, ptr);
 		
-	spi_sendcommand(ILI9341_CMD_SLEEP_OUT,0,ptr);
+	spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_SLEEP_OUT,0,ptr);
 	time_sleep(120);
 
-	//spi_sendcommand(ILI9341_CMD_DISPLAY_ON,0,ptr);
-	//time_sleep(120);
+	spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_DISPLAY_ON,0,ptr);
+	time_sleep(120);
 	
 	init_frame_buffer();
 }
@@ -257,7 +272,7 @@ int ili9341_set_screen_rotation(unsigned char rotation, int bgr)
 			rotation_param.mBits.BGR = 1;
 		}
 		rotation_param.mBits.MX_Column_address_order = 1;
-		spi_sendcommand(ILI9341_CMD_MEMORY_ACCESS_CONTROL, 1, &(rotation_param.mAsU8));
+		spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_MEMORY_ACCESS_CONTROL, 1, &(rotation_param.mAsU8));
 		TFT_Screen_width = TFT_DISPLAY_WIDTH;
 		TFT_Screen_height = TFT_DISPLAY_HEIGHT;		
 		return 0;
@@ -269,7 +284,7 @@ int ili9341_set_screen_rotation(unsigned char rotation, int bgr)
 			rotation_param.mBits.BGR = 1;
 		}
 		rotation_param.mBits.MV_Row_Column_Exchange = 1;
-		spi_sendcommand(ILI9341_CMD_MEMORY_ACCESS_CONTROL, 1, &(rotation_param.mAsU8));
+		spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_MEMORY_ACCESS_CONTROL, 1, &(rotation_param.mAsU8));
 		TFT_Screen_width = TFT_DISPLAY_HEIGHT;
 		TFT_Screen_height = TFT_DISPLAY_WIDTH;
 		return 0;
@@ -281,7 +296,7 @@ int ili9341_set_screen_rotation(unsigned char rotation, int bgr)
 			rotation_param.mBits.BGR = 1;
 		}
 		rotation_param.mBits.MY_Row_address_order = 1;
-		spi_sendcommand(ILI9341_CMD_MEMORY_ACCESS_CONTROL, 1, &(rotation_param.mAsU8));
+		spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_MEMORY_ACCESS_CONTROL, 1, &(rotation_param.mAsU8));
 		TFT_Screen_width = TFT_DISPLAY_WIDTH;
 		TFT_Screen_height = TFT_DISPLAY_HEIGHT;
 		return 0;
@@ -295,7 +310,7 @@ int ili9341_set_screen_rotation(unsigned char rotation, int bgr)
 		rotation_param.mBits.MX_Column_address_order = 1;
 		rotation_param.mBits.MY_Row_address_order = 1;
 		rotation_param.mBits.MV_Row_Column_Exchange = 1;
-		spi_sendcommand(ILI9341_CMD_MEMORY_ACCESS_CONTROL, 1, &(rotation_param.mAsU8));
+		spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_MEMORY_ACCESS_CONTROL, 1, &(rotation_param.mAsU8));
 		TFT_Screen_width = TFT_DISPLAY_HEIGHT;
 		TFT_Screen_height = TFT_DISPLAY_WIDTH;
 		return 0;
@@ -317,7 +332,7 @@ int ili9341_update_display(void)
 	for(i=0;i<size;i++)
 	{
 		memcpy(&TFT_Screen_frambuffer[i*BYTES_PER_PIXEL], &color_rgb_values[COLOR_RED][0],BYTES_PER_PIXEL);
-		spi_sendbytes(BYTES_PER_PIXEL, &TFT_Screen_frambuffer[i*BYTES_PER_PIXEL]);
+		spi_sendbytes(ILI9341_SPI_CHIP_SELECT,BYTES_PER_PIXEL, &TFT_Screen_frambuffer[i*BYTES_PER_PIXEL]);
 	}
 	
 	return 0;
@@ -342,14 +357,14 @@ int ili9341_load_image(const unsigned char* img, int image_width, int image_heig
 		{
 			rgb[0] = img[(i*image_bytes_per_pixel)+0];
 			rgb[1] = img[(i*image_bytes_per_pixel)+1];
-			spi_sendbytes(BYTES_PER_PIXEL, rgb);
+			spi_sendbytes(ILI9341_SPI_CHIP_SELECT,BYTES_PER_PIXEL, rgb);
 		}
 		else if(image_bytes_per_pixel == BYTES_PER_PIXEL)
 		{
 			rgb[2] = img[(i*image_bytes_per_pixel)+0];
 			rgb[1] = img[(i*image_bytes_per_pixel)+1];
 			rgb[0] = img[(i*image_bytes_per_pixel)+2];
-			spi_sendbytes(BYTES_PER_PIXEL, rgb);
+			spi_sendbytes(ILI9341_SPI_CHIP_SELECT,BYTES_PER_PIXEL, rgb);
 		}
 	}
 	
@@ -368,7 +383,7 @@ int ili9341_set_vertical_scrolling_definition(short top_fixed_area, short scroll
 	cmd_data[4] = (bottom_fixed_area >> 8) & 0xFF;
 	cmd_data[5] = (bottom_fixed_area & 0xFF);
 		
-	spi_sendcommand(ILI9341_CMD_VERTICAL_SCROLL_DEFINITION,6,(unsigned char*)cmd_data);
+	spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_VERTICAL_SCROLL_DEFINITION,6,(unsigned char*)cmd_data);
 
 	return 0;
 }
@@ -381,7 +396,7 @@ int ili9341_set_vertical_scrolling_set_start_addr(short start_line)
 	cmd_data[0] = (start_line >> 8) & 0xFF;
 	cmd_data[1] = (start_line & 0xFF);
 		
-	spi_sendcommand(ILI9341_CMD_MEMORY_VERTICAL_SCROLL_START_ADDR,2,(unsigned char*)cmd_data);
+	spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_MEMORY_VERTICAL_SCROLL_START_ADDR,2,(unsigned char*)cmd_data);
 
 	return 0;
 }
@@ -391,7 +406,7 @@ int ili9341_scroll(void)
 	unsigned char cmd_data[1];
 	memset((char *)cmd_data,0x00,1);
 		
-	spi_sendcommand(ILI9341_CMD_MEMORY_VERTICAL_SCROLL_START_ADDR,1,(unsigned char*)cmd_data);
+	spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_MEMORY_VERTICAL_SCROLL_START_ADDR,1,(unsigned char*)cmd_data);
 
 	return 0;
 }
@@ -407,16 +422,16 @@ int ili9341_set_addr_window(short x0, short y0, short x1, short y1)
 	cmd_data[1] =  x0 & 0xFF;
 	cmd_data[2] =  x1 >> 8;
 	cmd_data[3] =  x1 & 0xFF ;
-	spi_sendcommand(ILI9341_CMD_COLUMN_ADDRESS_SET,4,(unsigned char*)cmd_data);
+	spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_COLUMN_ADDRESS_SET,4,(unsigned char*)cmd_data);
 	
 	memset((char*)cmd_data,0x00,4);
 	cmd_data[0] =  y0 >> 8;
 	cmd_data[1] =  y0 & 0xFF;
 	cmd_data[2] =  y1 >> 8;
 	cmd_data[3] =  y1 & 0xFF;
-	spi_sendcommand(ILI9341_CMD_PAGE_ADDRESS_SET,4,(unsigned char*)cmd_data);
+	spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_PAGE_ADDRESS_SET,4,(unsigned char*)cmd_data);
 
-	spi_sendcommand(ILI9341_CMD_MEMORY_WRITE,0,(unsigned char*)cmd_data);
+	spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_MEMORY_WRITE,0,(unsigned char*)cmd_data);
 	
 	TFT_Screen_dirty_x0 = x0;
 	TFT_Screen_dirty_y0 = y0;
@@ -425,6 +440,10 @@ int ili9341_set_addr_window(short x0, short y0, short x1, short y1)
 
 	return 0;
 }	
+
+/*int ili9341_print_number(unsigned int number,int color)
+{
+}*/
 
 int ili9341_print_string(char* print_string,int color)
 {
@@ -563,7 +582,7 @@ int ili9341_print_char(char print_char,int x, int y,int color)
 	{
 		for(j = 0; j< font_width; j++)
 		{
-			spi_sendbytes(BYTES_PER_PIXEL,(unsigned char*)&char_frame_buffer[i][j][0]);
+			spi_sendbytes(ILI9341_SPI_CHIP_SELECT,BYTES_PER_PIXEL,(unsigned char*)&char_frame_buffer[i][j][0]);
 		}
 	}
 	
@@ -588,13 +607,14 @@ void ili9341_fill_color(short x0, short y0, short x1, short y1,int color)
 	ili9341_set_addr_window(x0,y0,x1,y1);
 	
 	size = (((x1-x0)+1)*((y1-y0)+1)*BYTES_PER_PIXEL);
-	memset(TFT_Screen_frambuffer,0x00,size);
-	spi_sendbytes(size, TFT_Screen_frambuffer);
+	memfill_pattern(TFT_Screen_frambuffer,(char*)color_rgb_values[color] ,size,BYTES_PER_PIXEL);
+	//memset(TFT_Screen_frambuffer,0x00,size);
+	spi_sendbytes(ILI9341_SPI_CHIP_SELECT,size, TFT_Screen_frambuffer);
 }
 
 void ili9341_fill_color_dma(short x0, short y0, short x1, short y1,int color)
 {
-	//ili9341_set_addr_window(x0,y0,x1,y1);
+	ili9341_set_addr_window(x0,y0,x1,y1);
 
 	DMA_SPI_Write_test();
 }
@@ -604,10 +624,10 @@ void ili9341_tests(void)
 	//Scren tests
 	get_font_header();
 	//fill whole screen with black
-	unsigned int current_time = get_current_time();
+	/*unsigned int current_time = get_current_time();
 	ili9341_fill_color(0,0,(ili9341_get_width()-1),(ili9341_get_height()-1),COLOR_BLACK);
-	calculate_execution_time(current_time);
-	ili9341_set_vertical_scrolling_definition(0,ili9341_get_height(),0);
+	calculate_execution_time(current_time);*/
+	/*ili9341_set_vertical_scrolling_definition(0,ili9341_get_height(),0);
 	ili9341_print_string_newline("This is a print test : 1",COLOR_YELLOW);
 	ili9341_print_string_newline("This is a print test : 2",COLOR_RED);
 	ili9341_print_string_newline("This is a print test : 3",COLOR_BLUE);
@@ -632,83 +652,15 @@ void ili9341_tests(void)
 	ili9341_print_string_newline("This is a print test : 22",COLOR_RED);
 	ili9341_print_string_newline("This is a print test : 23",COLOR_BLUE);
 	ili9341_print_string_newline("This is a print test : 24",COLOR_CYAN);
-	ili9341_print_string_newline("This is a print test : 25",COLOR_RED);
+	ili9341_print_string_newline("This is a print test : 25",COLOR_RED);*/
 	
-	/*load_image(a_image.pixel_data, a_image.width, a_image.height,a_image.bytes_per_pixel);
+	//unsigned int current_time = get_current_time();
+	ili9341_load_image(a_image.pixel_data, a_image.width, a_image.height,a_image.bytes_per_pixel);
+	//time_sleep(5000);
+	/*ili9341_load_image(f_image.pixel_data, f_image.width, f_image.height,f_image.bytes_per_pixel);
 	time_sleep(5000);
-	load_image(f_image.pixel_data, f_image.width, f_image.height,f_image.bytes_per_pixel);
-	time_sleep(5000);
-	load_image(atoz_image.pixel_data, atoz_image.width, atoz_image.height,atoz_image.bytes_per_pixel);*/
+	ili9341_load_image(atoz_image.pixel_data, atoz_image.width, atoz_image.height,atoz_image.bytes_per_pixel);*/
 	
-	ili9341_turn_display_off();
 }
 
-	
-int notmain(void)
-{	
-	time_sleep(1000);
-	LEDInit();
-	UARTInit();
-	LEDTurnoff();
-	uart_tests();
 
-	time_sleep(1000);
-	unsigned int arm_aux_ctrl_reg = Read_ARM_Auxiliary_Control_Register();
-	unsigned int arm_sys_ctrl_reg = Read_ARM_System_Control_Register();
-	unsigned int arm_watchpoint_ctrl_reg = Read_Watchpoint_control_Register0();	
-	unsigned int arm_breakpoint_ctrl_reg  = Read_Breakpoint_control_Register0();
-	uart_print_string_newline("ARM SYS CTRL REG:");
-	uart_print_number_int_hex(arm_sys_ctrl_reg);
-	//Enable Instruction cache
-	enable_instruction_cache();
-	//Enable Data and unified cache
-	//enable_data_and_unified_cache();
-	arm_sys_ctrl_reg = Read_ARM_System_Control_Register();
-	uart_print_string_newline("ARM SYS CTRL REG:");
-	uart_print_number_int_hex(arm_sys_ctrl_reg);
-	uart_print_string_newline("ARM WATCHPOINT CTRL REG:");
-	uart_print_number_int_hex(arm_watchpoint_ctrl_reg);
-	uart_print_string_newline("ARM BREAKPOINT CTRL REG:");
-	uart_print_number_int_hex(arm_breakpoint_ctrl_reg);
-	uart_print_string_newline("ARM AUX CTRL REG:");
-	uart_print_number_int_hex(arm_aux_ctrl_reg);
-	enable_L2_cache();
-	arm_aux_ctrl_reg = Read_ARM_Auxiliary_Control_Register();
-	uart_print_string_newline("ARM AUX CTRL REG:");
-	uart_print_number_int_hex(arm_aux_ctrl_reg);
-
-	
-	arm_jtag_init();
-	i2c_init();
-	spi_init();	
-	uart_tests();
-	time_sleep(1000);
-	ili9341_init_tft_display();
-	ili9341_set_screen_rotation(ROTATION_0,RGB);
-	
-
-	//Tests
-	FT6206_tests();
-	//ili9341_tests();
-	//DMA_test();
-	ili9341_fill_color_dma(0,0,(ili9341_get_width()-1),(ili9341_get_height()-1),COLOR_BLACK);
-
-	
-	//enable_Ft6206_touch_screen_i2c_interrupt();
-	//enable_system_timer_fiq_interrupt();
-	//enable_system_timer_irq_interrupt();
-
-		
-	while(1)
-	{
-		time_sleep(2000);
-		LEDTurnon();
-		time_sleep(2000);
-		LEDTurnoff();
-		//polled_sys_timer_interrupt_handler();
-		//polled_Ft6206_irq_handler();
-	}
-	SET_BREAKPOINT();
-	return 0;
-	
-}

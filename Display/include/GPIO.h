@@ -47,18 +47,6 @@
 int LEDInit(void);
 int LEDTurnon(void);
 int LEDTurnoff(void);
-//xmodem enums
-
-enum xmodem_chars
-{
-	SOH = 0x01,
-	EOT = 0x04,
-	ACK = 0x06,
-	NAK = 0x15,
-	ETB = 0x17,
-	CAN = 0x18,
-};
-
 
 enum Function_Select
 {
@@ -87,7 +75,7 @@ typedef union __attribute__((packed)) _GPIO_Function_Select0_t
 	   unsigned int     FunctionSelGPIO7        :3;
        unsigned int     FunctionSelGPIO8		:3;
        unsigned int     FunctionSelGPIO9        :3;
-	   unsigned int     Reserved		      	:3;
+	   unsigned int     Reserved		      	:2;
        //MSB
     } mBits;  
     unsigned int   mAsU32;
@@ -108,7 +96,7 @@ typedef union __attribute__((packed)) _GPIO_Function_Select1_t
 	   unsigned int     FunctionSelGPIO17        	:3;
        unsigned int     FunctionSelGPIO18		  	:3;
        unsigned int     FunctionSelGPIO19        	:3;
-	   unsigned int     Reserved		      	  	:3;
+	   unsigned int     Reserved		      	  	:2;
        //MSB
     } mBits;  
     unsigned int   mAsU32;
@@ -129,7 +117,7 @@ typedef union __attribute__((packed)) _GPIO_Function_Select2_t
 	   unsigned int     FunctionSelGPIO27       	 :3;
        unsigned int     FunctionSelGPIO28		 	 :3;
        unsigned int     FunctionSelGPIO29       	 :3;
-	   unsigned int     Reserved		      	  	 :3;
+	   unsigned int     Reserved		      	  	 :2;
        //MSB
     } mBits;  
     unsigned int   mAsU32;
@@ -150,7 +138,7 @@ typedef union __attribute__((packed)) _GPIO_Function_Select3_t
 	   unsigned int     FunctionSelGPIO37       	 :3;
        unsigned int     FunctionSelGPIO38		 	 :3;
        unsigned int     FunctionSelGPIO39       	 :3;
-	   unsigned int     Reserved		      	  	 :3;
+	   unsigned int     Reserved		      	  	 :2;
        //MSB
     } mBits;  
     unsigned int   mAsU32;
@@ -171,7 +159,7 @@ typedef union __attribute__((packed)) _GPIO_Function_Select4_t
 	   unsigned int     FunctionSelGPIO47       	 :3;
        unsigned int     FunctionSelGPIO48		 	 :3;
        unsigned int     FunctionSelGPIO49       	 :3;
-	   unsigned int     Reserved		      	  	 :3;
+	   unsigned int     Reserved		      	  	 :2;
        //MSB
     } mBits;  
     unsigned int   mAsU32;
@@ -261,7 +249,7 @@ typedef union __attribute__((packed)) _GPIO_Output_Set_Register1_t
 	   unsigned int     SetGPIO51       :1;
 	   unsigned int     SetGPIO52       :1;
 	   unsigned int     SetGPIO53       :1;
-	   unsigned int 	Reserved		  :10;
+	   unsigned int 	Reserved		:10;
        //MSB
     } mBits;  
     unsigned int   mAsU32;

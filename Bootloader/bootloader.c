@@ -3,6 +3,7 @@
 #include "SystemTimer.h"
 #include "interrupts.h"
 
+#define MAX_DIGITS_IN_32_BIT_NUMBER 10
 
 extern void dummy ( unsigned int );
 extern void PUT32 ( unsigned int, unsigned int );
@@ -20,8 +21,6 @@ unsigned char* bootloader_ptr = (unsigned char*) 0x8000;
 
 unsigned int time_ms = 1000;
 unsigned char uart_buf[UART_BUF_SIZE];
-
-
 
 int UARTInit(void);
 int LEDInit(void);
@@ -91,6 +90,46 @@ void init_uart_buf(void)
 	}
 }
 
+
+void uart_print_number(int num)
+{
+	int index = 0;
+	int i = 0;
+	char num_to_char[MAX_DIGITS_IN_32_BIT_NUMBER]= {'0','0','0','0','0','0','0','0','0','0'};
+	if(num == 0)
+	{
+		uart_putchar('0');
+	}
+	else
+	{
+		while(num != 0)
+		{
+			num_to_char[index] = (num%10) + '0';
+			num = num/10;
+			index++;
+		}
+		for(i =index-1; i >=0 ; i--)
+		{
+			uart_putchar(num_to_char[i]);
+			if((i%3 == 0) && (i!=0))
+			{
+				uart_putchar(',');
+			}
+		}
+	}
+}
+
+void uart_print_string_newline(char* str)
+{
+	uart_putchar(0x0D);
+	uart_putchar(0x0A);
+	while(*str != '\0')
+	{
+		uart_putchar(*str);
+		str++;
+	}	
+}
+
 void uart_print_string(char* str)
 {
 	while(*str != '\0')
@@ -114,6 +153,11 @@ int time_sleep(unsigned int time_ms)
 	}
 	
 	return 0;
+}
+
+void flush_uart_rx_buffer(void) {
+    unsigned char c;
+    while (uart_recvchar(&c, 100) == 0);
 }
 
 
@@ -303,7 +347,7 @@ int enable_system_timer_fiq_interrupt(void)
 
 
 
-void __attribute__((interrupt( irq ))) c_irq_handler (void)
+void c_irq_handler (void)
 {
 	static int led_on = 0;
 
@@ -329,7 +373,7 @@ void __attribute__((interrupt( irq ))) c_irq_handler (void)
 	}
 }
 
-void __attribute__((interrupt( fiq ))) c_fiq_handler (void)
+void c_fiq_handler (void)
 {
 	static int led_on = 0;
 
@@ -363,7 +407,7 @@ int xmodem_send(void*ptr , int byte_count)
 	{
 		if(uart_recvchar(&temp,1000) == 0)
 		{
-			if(temp == NAK)
+			if(temp == XMODEM_NAK)
 			{
 				break;
 			}
@@ -379,60 +423,81 @@ int xmodem_send(void*ptr , int byte_count)
 	return 0;
 }
 
+
 int xmodem_recv(void* recv_ptr)
 {
 	unsigned int char_index = 1;
 	unsigned char seq_num = 1;
 	unsigned int byte_count = 0;
+	int SOH_received = -1;
 
 	LEDTurnon();
+
 
 	//Wait till we receive a character
 	while(1)
 	{		
-		uart_recvchar(&uart_buf[0],3000);
+		uart_recvchar(&uart_buf[0],10000);
 		
-		if(uart_buf[0] == SOH)
+		if(uart_buf[0] == XMODEM_SOH)
 		{
+			SOH_received = 1;
 			while(char_index < UART_BUF_SIZE)
 			{
 				if(uart_recvchar(&uart_buf[char_index],1000) == 0)
 				{
 					char_index++;
 				}
+				else
+				{
+					break;
+				}
 			}
-			//At this point we have the whole packet
+			//At this point we have the whole packet or we dont
 			if((uart_buf[1] ==seq_num) && (uart_buf[2] == (unsigned char)(~seq_num)) && (uart_buf[131] == (calc_checksum(&uart_buf[3],XMODEM_PAYLOAD_SIZE))))
 			{
+				SOH_received = 0;
 				seq_num++;
 				char_index = 1;				
 				memcpy((recv_ptr+byte_count),&uart_buf[3],XMODEM_PAYLOAD_SIZE);
 				byte_count += XMODEM_PAYLOAD_SIZE;
 				init_uart_buf();
-				uart_putchar(ACK);
+				uart_putchar(XMODEM_ACK);
 			}
 			else
 			{
+				SOH_received = 0;
 				char_index = 1;
 				init_uart_buf();
-				uart_putchar(NAK);
+				flush_uart_rx_buffer();
+				uart_putchar(XMODEM_NAK);
 			}
 		}
-		else if(uart_buf[0] == EOT)
+		else if(uart_buf[0] == XMODEM_EOT)
 		{
 			LEDTurnoff();
-			uart_putchar(ACK);
+			uart_putchar(XMODEM_ACK);
+			SOH_received = -1;
 			return byte_count;
 		}
-		else
+		else if(uart_buf[0] == XMODEM_CAN)
 		{
-			uart_putchar(NAK);
+			char_index = 1;
+			seq_num = 1;
+			byte_count = 0;
+			uart_putchar(XMODEM_ACK);
+			SOH_received = -1;
+		}
+		else if(SOH_received == -1)
+		{
+			uart_putchar(XMODEM_NAK);
 		}
 	}
 	
 	return 0;
 	
 }
+
 
 int notmain(void)
 {
@@ -442,15 +507,14 @@ int notmain(void)
 	arm_jtag_int();
 	init_uart_buf();
 	
-	uart_print_string("Send bin file to boot");
+	uart_print_string_newline("Send bin file to boot");	
+	byte_count= xmodem_recv(bootloader_ptr);
+	uart_print_string_newline("File size sent:");
+	uart_print_number(byte_count);
+	uart_print_string_newline("Booting bin file");
+	time_sleep(1000);
 	
-	enable_system_timer_irq_interrupt();
-
-	/*byte_count= xmodem_recv(bootloader_ptr);
-	
-	uart_print_string("Booting bin file");
-	
-	BRANCHTO((unsigned int)bootloader_ptr);*/
+	BRANCHTO((unsigned int)bootloader_ptr);
 	
 		
 	while(1)

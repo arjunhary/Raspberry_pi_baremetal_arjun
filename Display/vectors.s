@@ -44,7 +44,7 @@ reset:
     ;@ (PSR_SVC_MODE|PSR_FIQ_DIS|PSR_IRQ_DIS)
     mov r0,#0xD3
     msr cpsr_c,r0
-    mov sp,#0x8000
+    mov sp,#0x8000000
 	
     bl notmain
 	
@@ -83,30 +83,17 @@ enable_fiq:
 BRANCHTO:
     bx r0
 
-irq:
-    push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
-    bl c_irq_handler
-    pop  {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
-    subs pc,lr,#4
-
-fiq:
-    push {r0,r1,r2,r3,r4,r5,r6,r7,lr}
-    bl c_fiq_handler
-    pop  {r0,r1,r2,r3,r4,r5,r6,r7,lr}
-    subs pc,lr,#4	
+.globl Read_CPSR_Register
+Read_CPSR_Register:
+	mrs r0,cpsr
+	bx lr
 	
 .globl Read_ARM_Auxiliary_Control_Register
 Read_ARM_Auxiliary_Control_Register:
 	mrc p15, 0, r0, c1, c0, 1
 	bx lr
 	
-.globl enable_L2_cache
-enable_L2_cache:
-	mrc p15, 0, r0, c1, c0, 1
-	orr r0,r0,#0x00000002
-	mcr p15, 0, r0, c1, c0, 1
-	bx lr
-	
+
 .globl Read_ARM_System_Control_Register
 Read_ARM_System_Control_Register:	
 	mrc p15, 0, r0, c1, c0, 0
@@ -125,6 +112,14 @@ enable_data_and_unified_cache:
 	orr r0,r0,#0x00000004
 	mcr p15, 0, r0, c1, c0, 0
 	bx lr
+	
+.globl enable_L2_cache
+enable_L2_cache:
+	mrc p15, 0, r0, c1, c0, 1
+	orr r0,r0,#0x00000002
+	mcr p15, 0, r0, c1, c0, 1
+	bx lr
+	
 
 .globl Read_Watchpoint_control_Register0
 Read_Watchpoint_control_Register0:		
@@ -135,6 +130,23 @@ Read_Watchpoint_control_Register0:
 Read_Breakpoint_control_Register0:		
 	mrc p14, 0, r0 , c0, c0, 4
 	bx lr
+	
+.globl Read_Interrupt_status_Register
+Read_Interrupt_status_Register:		
+	mrc p15, 0, r0, c12, c1, 0
+	bx lr
+
+.globl Read_Multiprocessor_affinity_register
+Read_Multiprocessor_affinity_register:		
+	mrc p15, 0, r0, c0, c0, 5
+	bx lr
+
+irq:
+    push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
+    bl c_irq_handler
+    pop  {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
+    subs pc,lr,#4
+	
 	
 ;@-------------------------------------------------------------------------
 ;@-------------------------------------------------------------------------

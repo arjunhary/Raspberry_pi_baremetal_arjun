@@ -11,6 +11,8 @@
 #define INTERRUPT_DISABLE_IRQ2			INTERRUPT_BASE_ADDRESS+0x220
 #define INTERRUPT_DISABLE_BASICIRQ		INTERRUPT_BASE_ADDRESS+0x224
 
+void enable_irq(void);
+void enable_fiq(void);
 int enable_Ft6206_touch_screen_i2c_interrupt(void);
 int is_system_timer_interrupt_pending(void);
 //void __attribute__((interrupt("IRQ"))) c_irq_handler (void);
@@ -18,6 +20,8 @@ int is_system_timer_interrupt_pending(void);
 void polled_sys_timer_interrupt_handler(void);
 int is_gpio_interrupt_pending(void);
 void  polled_Ft6206_irq_handler (void);
+int enable_system_timer_irq_interrupt(void);
+int enable_system_timer_fiq_interrupt(void);
 
 
 typedef union __attribute__((packed)) _Interrupt_IRQ_basic_pending_reg_t

@@ -46,33 +46,6 @@ int is_gpio_interrupt_pending(void)
 }
 
 
-void polled_sys_timer_interrupt_handler(void)
-{
-	static int led_on =0;
-	if(is_system_timer_interrupt_pending() == 1)
-	{
-		//Reset the counter match register
-		unsigned int start_tick = GET32(SYSTEM_TIMER_CL0_REG_LSB);
-		PUT32(SYSTEM_TIMER_CMP1,(start_tick + (time_ms*1000)));
-		
-		//Clear the system timer match register
-		System_timer_control_Reg_t systimctrl;
-		systimctrl = (System_timer_control_Reg_t) GET32(SYSTEM_TIMER_CS_REG);
-		systimctrl.mBits.System_timer1_match = 1;
-		PUT32(SYSTEM_TIMER_CS_REG,systimctrl.mAsU32);
-		
-		if(led_on == 0)
-		{
-			LEDTurnon();
-			led_on = 1;
-		}
-		else
-		{
-			LEDTurnoff();
-			led_on = 0;
-		}
-	}
-}
 
 
 int enable_system_timer_irq_interrupt(void)
@@ -244,6 +217,35 @@ void c_irq_handler (void)
 		led_on = 0;
 	}
 }
+
+void polled_sys_timer_interrupt_handler(void)
+{
+	static int led_on =0;
+	if(is_system_timer_interrupt_pending() == 1)
+	{
+		//Reset the counter match register
+		unsigned int start_tick = GET32(SYSTEM_TIMER_CL0_REG_LSB);
+		PUT32(SYSTEM_TIMER_CMP1,(start_tick + (time_ms*1000)));
+		
+		//Clear the system timer match register
+		System_timer_control_Reg_t systimctrl;
+		systimctrl = (System_timer_control_Reg_t) GET32(SYSTEM_TIMER_CS_REG);
+		systimctrl.mBits.System_timer1_match = 1;
+		PUT32(SYSTEM_TIMER_CS_REG,systimctrl.mAsU32);
+		
+		if(led_on == 0)
+		{
+			LEDTurnon();
+			led_on = 1;
+		}
+		else
+		{
+			LEDTurnoff();
+			led_on = 0;
+		}
+	}
+}
+
 
 
 

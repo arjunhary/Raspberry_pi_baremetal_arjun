@@ -6,7 +6,7 @@
 
 int DMA_wait_for_transfer_complete(int channel)
 {
-	volatile DMA_control_Reg_t dmactrlreg;
+	DMA_control_Reg_t dmactrlreg;
 	dmactrlreg.mAsU32 = 0;
 	unsigned int dma_channel_base_address = 0;
 	switch (channel)
@@ -191,16 +191,15 @@ extern unsigned char TFT_Screen_frambuffer[TFT_DISPLAY_WIDTH*TFT_DISPLAY_HEIGHT*
 unsigned int spi_dummy_receive = 0;
 int DMA_SPI_Write_test(void)
 {
+	memset(TFT_Screen_frambuffer,0x00,((320*240*3)+4));
+
 	//Set GPIO25
-	//set_DC_high_for_data();
-	PUT32(SPI_DATA_LENGTH,3);
-	PUT32(SPI_CONTROL_STATUS_REGISTER,0x00000930);
-	
-	//PUT32(SPI_TX_RX_FIFO,0x80);
-	//PUT32(SPI_TX_RX_FIFO,0x29);
+	set_DC_high_for_data();
+	PUT32(SPI_DATA_LENGTH,4096);
+	PUT32(SPI_CONTROL_STATUS_REGISTER,0x000009B0);
 	
 	unsigned int* source_addr = (unsigned int*)TFT_Screen_frambuffer;
-	unsigned int* dest_addr   = (unsigned int*)(0xFF204004);
+	unsigned int* dest_addr   = (unsigned int*)(0x3F204004);
 	
 	DMA_Transfer_Information_Reg_t dma_transfer_spi_tx_information;
 	dma_transfer_spi_tx_information.mAsU32 = 0;
@@ -214,18 +213,12 @@ int DMA_SPI_Write_test(void)
 	dma_transfer_spi_rx_information.mAsU32 = 0;
 	dma_transfer_spi_rx_information.mBits.DMA_source_address_increment = 0;
 	dma_transfer_spi_rx_information.mBits.DMA_Destination_address_increment = 0;
-	dma_transfer_spi_rx_information.mBits.DMA_source_PERMAP = 7;
-	dma_transfer_spi_rx_information.mBits.DMA_source_DREQ = 1;
-
-	memset(TFT_Screen_frambuffer,0xFF,((320*240*3)+4));
-	TFT_Screen_frambuffer[0] = 0x8F;
-	TFT_Screen_frambuffer[1] = 0x8F;
-	TFT_Screen_frambuffer[2] = 0x8F;
-	TFT_Screen_frambuffer[3] = 0x8F;
+	//dma_transfer_spi_rx_information.mBits.DMA_source_PERMAP = 7;
+	//dma_transfer_spi_rx_information.mBits.DMA_source_DREQ = 1;
 
 	
-	DMA_setup_CB(1,(unsigned int)dest_addr,(unsigned int)&spi_dummy_receive,3,dma_transfer_spi_rx_information.mAsU32,1);
-	DMA_setup_CB(0,(unsigned int)source_addr,(unsigned int)dest_addr,3,dma_transfer_spi_tx_information.mAsU32,0);
+	DMA_setup_CB(1,(unsigned int)dest_addr,(unsigned int)&spi_dummy_receive,4096,dma_transfer_spi_rx_information.mAsU32,1);
+	DMA_setup_CB(0,(unsigned int)source_addr,(unsigned int)dest_addr,4096,dma_transfer_spi_tx_information.mAsU32,0);
 	DMA_Start_transfer(1);
 	DMA_Start_transfer(0);
 	DMA_wait_for_transfer_complete(0);

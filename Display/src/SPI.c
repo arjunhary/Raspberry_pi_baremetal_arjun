@@ -4,13 +4,13 @@
 
 extern unsigned int start_time;
 
-int spi_sendreadcommand(unsigned char command, int len,unsigned char* buf)
+int spi_sendreadcommand(int chip_select, unsigned char command, int len,unsigned char* buf)
 {
 	int i=0;
 	unsigned char dummy_value = 0xff;
 	
 	//Set the control register . Clear the fifo bits and set TA =1
-	start_spi_transfer();
+	start_spi_transfer(chip_select);
 	
 	//Clear GPI0 25.Sending a command
 	set_DC_low_for_command();
@@ -75,7 +75,7 @@ void spi_init(void)
 	PUT32(GPIO_REG_GPFSEL1,gpiofnsel1.mAsU32);
 	
 	//Configure gpio 24,25 as output. 25 is for data/command selection. 24 is for Interrupt
-	volatile GPIO_Funtion_Select2_t GPIOFnsel2;
+	GPIO_Funtion_Select2_t GPIOFnsel2;
 	GPIOFnsel2 = (GPIO_Funtion_Select2_t)GET32(GPIO_REG_GPFSEL2);
 	GPIOFnsel2.mBits.FunctionSelGPIO25 = GPIO_SET_AS_OUTPUT;
 	PUT32(GPIO_REG_GPFSEL2,GPIOFnsel2.mAsU32);
@@ -83,7 +83,7 @@ void spi_init(void)
 	//Set clk speed
 	SPI_clk_Reg_t spiclkspeed;
 	spiclkspeed = (SPI_clk_Reg_t)GET32(SPI_CLK_DIVIDER);
-	spiclkspeed.mBits.clk_div = BCM2835_SPI_CLOCK_DIVIDER_4;
+	spiclkspeed.mBits.clk_div = BCM2835_SPI_CLOCK_DIVIDER_8;
 	PUT32(SPI_CLK_DIVIDER,spiclkspeed.mAsU32);
 	
 	//Set the SPI control register
@@ -107,7 +107,7 @@ void set_DC_low_for_command(void)
 void set_DC_high_for_data(void)
 {
 	//Set GPIO25
-	volatile GPIO_Output_Set_Register0_t GPIOsetReg0;
+	GPIO_Output_Set_Register0_t GPIOsetReg0;
 	GPIOsetReg0 = (GPIO_Output_Set_Register0_t)GET32(GPIO_REG_GPSET0);
 	GPIOsetReg0.mBits.SetGPIO25 = 1;
 	PUT32(GPIO_REG_GPSET0,GPIOsetReg0.mAsU32);
@@ -116,7 +116,7 @@ void set_DC_high_for_data(void)
 void stop_spi_transfer(void)
 {
 	//Set TA = 0 and clear the fifo
-	volatile SPI_control_Reg_t spictrlreg;
+	SPI_control_Reg_t spictrlreg;
 	spictrlreg = (SPI_control_Reg_t) GET32(SPI_CONTROL_STATUS_REGISTER);
 	spictrlreg.mAsU32 = 0x00000000;
 	PUT32(SPI_CONTROL_STATUS_REGISTER,spictrlreg.mAsU32);
@@ -125,7 +125,7 @@ void stop_spi_transfer(void)
 
 void spi_dma_enable_and_adcs(void)
 {
-	volatile SPI_control_Reg_t spictrlreg;
+	SPI_control_Reg_t spictrlreg;
 	spictrlreg = (SPI_control_Reg_t) GET32(SPI_CONTROL_STATUS_REGISTER);
 	spictrlreg.mBits.dma_enable = 1;
 	spictrlreg.mBits.auto_desel_cs =0;
@@ -135,19 +135,22 @@ void spi_dma_enable_and_adcs(void)
 
 void spi_dma_disable_and_adcs(void)
 {
-	volatile SPI_control_Reg_t spictrlreg;
+	SPI_control_Reg_t spictrlreg;
 	spictrlreg = (SPI_control_Reg_t) GET32(SPI_CONTROL_STATUS_REGISTER);
 	spictrlreg.mBits.dma_enable = 0;
 	spictrlreg.mBits.auto_desel_cs =0;
 	PUT32(SPI_CONTROL_STATUS_REGISTER,spictrlreg.mAsU32);
 }
 
-void start_spi_transfer(void)
+void start_spi_transfer(int chip_select)
 {
 	//Set the control register . Clear the fifo bits and set TA =1. Assumes chip select 0
-	volatile SPI_control_Reg_t spictrlreg;
+	SPI_control_Reg_t spictrlreg;
 	spictrlreg = (SPI_control_Reg_t) GET32(SPI_CONTROL_STATUS_REGISTER);
-	spictrlreg.mAsU32 = 0x000000B0;
+	spictrlreg.mBits.chip_select = chip_select;
+	spictrlreg.mBits.transfer_active = 1;
+	spictrlreg.mBits.clear_fifo = 3;
+	//spictrlreg.mAsU32 = 0x000000B0;
 	PUT32(SPI_CONTROL_STATUS_REGISTER,spictrlreg.mAsU32);
 }
 
@@ -192,7 +195,7 @@ void wait_till_tx_fifo_not_full(void)
 	}		
 }
 
-int spi_sendcommand(unsigned char command, int len,unsigned char* buf)
+int spi_sendcommand(int chip_select,unsigned char command, int len,unsigned char* buf)
 {
 	int i=0;
 	
@@ -200,7 +203,7 @@ int spi_sendcommand(unsigned char command, int len,unsigned char* buf)
 	set_DC_low_for_command();
 	
 	//Set the control register . Clear the fifo bits and set TA =1
-	start_spi_transfer();
+	start_spi_transfer(chip_select);
 	
 	//Wait till the TX buffer has space to send a byte
 	//wait_till_tx_fifo_not_full();
@@ -217,7 +220,7 @@ int spi_sendcommand(unsigned char command, int len,unsigned char* buf)
 	if(len > 0)
 	{		
 		//Set the control register . Clear the fifo bits and set TA =1
-		start_spi_transfer();
+		start_spi_transfer(chip_select);
 		
 		//Set GPIO25
 		set_DC_high_for_data();
@@ -238,9 +241,8 @@ int spi_sendcommand(unsigned char command, int len,unsigned char* buf)
 	return 0;
 }
 
-int toggle = -1;
 
-int spi_sendbytes(unsigned int number_of_bytes,unsigned char*ptr)
+int spi_sendbytes(int chip_select,unsigned int number_of_bytes,unsigned char*ptr)
 {
 	int i =0;
 	
@@ -248,7 +250,7 @@ int spi_sendbytes(unsigned int number_of_bytes,unsigned char*ptr)
 	set_DC_high_for_data();
 		
 	//Set the control register . Clear the fifo bits and set TA =1
-	start_spi_transfer();
+	start_spi_transfer(chip_select);
 	
 	for(i =0; i<number_of_bytes; i++)
 	{	
@@ -269,13 +271,13 @@ int spi_sendbytes(unsigned int number_of_bytes,unsigned char*ptr)
 }
 
 
-int spi_getbytes(unsigned char*ptr, int number_of_bytes)
+int spi_getbytes(int chip_select,unsigned char*ptr, int number_of_bytes)
 {
 	int i =0;
 	unsigned int data = 0;
 	
 	//Set the control register . Clear the fifo bits and set TA =1
-	start_spi_transfer();
+	start_spi_transfer(chip_select);
 		
 	//Set GPIO25
 	set_DC_high_for_data();
