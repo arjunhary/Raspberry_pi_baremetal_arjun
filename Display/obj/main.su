@@ -1,0 +1,2 @@
+main.c:19:6:init_all	8	static
+main.c:44:5:notmain	8	static

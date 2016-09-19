@@ -3,6 +3,7 @@
 #include "./../include/SystemTimer.h"
 #include "./../include/interrupts.h"
 #include "./../include/utility.h"
+#include <stdarg.h>
 
 #define MAX_DIGITS_IN_32_BIT_NUMBER 10
 unsigned char uart_buf[UART_BUF_SIZE];
@@ -49,6 +50,108 @@ void uart_print_string_newline(char* str)
 		str++;
 	}	
 	wait_till_transmitter_done();
+}
+
+void uart_printf(char* print_str,...)
+{
+    va_list arguments;   
+	va_start(arguments,print_str);
+	int print_seq_start = 0;
+	
+	while(*print_str != '\0')
+	{
+		switch(*print_str)
+		{
+			case '%':
+				print_str++;
+				print_seq_start = 1;
+				break;
+			case 'u':
+				if(print_seq_start == 1)
+				{
+					uart_print_unsigned_number(va_arg(arguments,unsigned int));
+					print_seq_start = 0;
+				}
+				else
+				{
+					uart_putchar(*print_str);
+				}
+				print_str++;
+				break;
+			case 'd':
+				if(print_seq_start == 1)
+				{
+					uart_print_number(va_arg(arguments,int));
+					print_seq_start = 0;
+				}
+				else
+				{
+					uart_putchar(*print_str);
+				}
+				print_str++;
+				break;
+			case 'c':
+				if(print_seq_start == 1)
+				{
+					uart_putchar(va_arg(arguments,unsigned int));
+					print_seq_start = 0;
+				}
+				else
+				{
+					uart_putchar(*print_str);
+				}
+				print_str++;
+				break;
+			case 's':
+				if(print_seq_start == 1)
+				{					
+					uart_print_string(va_arg(arguments,char*));
+					print_seq_start = 0;
+				}
+				else
+				{
+					uart_putchar(*print_str);
+				}
+				print_str++;
+				break;
+			case 'x':
+				if(print_seq_start == 1)
+				{
+					uart_print_number_int_hex(va_arg(arguments,unsigned int));
+					print_seq_start = 0;
+				}
+				else
+				{
+					uart_putchar(*print_str);
+				}
+				print_str++;
+				break;
+			case '\n':
+				uart_putchar(0x0D);
+				uart_putchar(0x0A);
+				print_str++;
+				break;
+			case '\t':
+				uart_print_string("    ");
+				print_str++;
+				break;
+			case '\'':
+				uart_putchar('\'');
+				print_str++;
+				break;
+			case '"':
+				uart_putchar('"');
+				print_str++;
+				break;
+			default:
+				uart_putchar(*print_str);
+				print_str++;
+				break;
+		}
+	}
+		
+	va_end(arguments);
+
 }
 
 void uart_print_number_int_hex(unsigned int num)
@@ -131,6 +234,35 @@ void uart_print_number_int_hex(unsigned int num)
 	wait_till_transmitter_done();
 }
 
+void uart_print_unsigned_number(unsigned int num)
+{
+	int index = 0;
+	int i = 0;
+	char num_to_char[MAX_DIGITS_IN_32_BIT_NUMBER]= {'0','0','0','0','0','0','0','0','0','0'};
+	if(num == 0)
+	{
+		uart_putchar('0');
+	}
+	else
+	{
+		while(num != 0)
+		{
+			num_to_char[index] = (num%10) + '0';
+			num = num/10;
+			index++;
+		}
+		for(i =index-1; i >=0 ; i--)
+		{
+			uart_putchar(num_to_char[i]);
+			if((i%3 == 0) && (i!=0))
+			{
+				uart_putchar(',');
+			}
+		}
+	}
+	wait_till_transmitter_done();
+}
+
 void uart_print_number(int num)
 {
 	int index = 0;
@@ -142,6 +274,11 @@ void uart_print_number(int num)
 	}
 	else
 	{
+		if(num < 0)
+		{
+			uart_putchar('-');
+			num = -num;
+		}
 		while(num != 0)
 		{
 			num_to_char[index] = (num%10) + '0';
@@ -396,11 +533,29 @@ int xmodem_recv(void* recv_ptr)
 }
 int uart_tests(void)
 {
-	uart_print_string_newline("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-	uart_print_string_newline("abcdefghijklmnopqrstuvwxyz");
-	uart_print_string_newline("0123456789");
-	uart_print_string_newline("9876543210");
+	uart_printf("\nABCDEFGHIJKLMNOPQRSTUVWXYZ");
+	uart_printf("\nabcdefghijklmnopqrstuvwxyz");
+	uart_printf("\n0123456789");
+	uart_printf("\n9876543210");
 	return 0;
+}
 
+void uart_printf_tests(void)
+{
+	uart_printf("\nsimple string\n");
+	uart_printf("New tab\t new line\n");
+	uart_printf("char : %c\n",'a');
+	uart_printf("char : %c\n",'9');
+	uart_printf("char : %c\n",'A');
+	uart_printf("char : %c\t , char2: %c\t , char3: %c\t, string: %s\n",'A','B','C',"abcdef");
+	uart_printf("String : %s\n","abcdefghi");
+	uart_printf("Number : %d\n", 100);
+	uart_printf("Hex of number %d is : %x\n",100,100);
+	uart_printf("Number : %d\n", -200);
+	uart_printf("Number : %d\n", 1700);
+	uart_printf("Number : %d\n", 123456789);
+	uart_printf("unsigned number : %u\n", 123456789);
+	uart_printf("unsigned number : %u\n", -100);
+	uart_printf("char : %c\t , Number: %d\t , hex: %x\t, string: %s\n",'A',5000,5000,"abcdef");
 
 }

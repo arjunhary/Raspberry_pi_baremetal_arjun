@@ -17,6 +17,7 @@
 
 #define ILI9341_SPI_CHIP_SELECT 0
 
+
 #if defined(BITS_PER_PIXEL_18)
 unsigned char color_rgb_values[][BYTES_PER_PIXEL] = {
 						{0x00,0x00,0x00}, 	//Black
@@ -104,14 +105,12 @@ void init_frame_buffer(void)
 
 int ili9341_get_screen_memory(short x0, short y0, short x1, short y1)
 {
-	int size = 0;
+	//int size = 0;
 	ili9341_set_addr_window(x0,y0,x1,y1);
-	size = (((x1-x0)+1)*((y1-y0)+1)*BYTES_PER_PIXEL);
+	//size = (((x1-x0)+1)*((y1-y0)+1)*BYTES_PER_PIXEL);
 	unsigned char ptr[1];
 	spi_sendcommand(ILI9341_SPI_CHIP_SELECT,ILI9341_CMD_MEMORY_READ,0,ptr);
 	spi_getbytes(ILI9341_SPI_CHIP_SELECT,TFT_Screen_frambuffer_test, 512);
-	
-	
 	return 0;
 }
 
@@ -607,8 +606,8 @@ void ili9341_fill_color(short x0, short y0, short x1, short y1,int color)
 	ili9341_set_addr_window(x0,y0,x1,y1);
 	
 	size = (((x1-x0)+1)*((y1-y0)+1)*BYTES_PER_PIXEL);
-	memfill_pattern(TFT_Screen_frambuffer,(char*)color_rgb_values[color] ,size,BYTES_PER_PIXEL);
-	//memset(TFT_Screen_frambuffer,0x00,size);
+	//memfill_pattern(TFT_Screen_frambuffer,(char*)color_rgb_values[color] ,size,BYTES_PER_PIXEL);
+	memset(TFT_Screen_frambuffer,0x00,size);
 	spi_sendbytes(ILI9341_SPI_CHIP_SELECT,size, TFT_Screen_frambuffer);
 }
 
@@ -624,9 +623,9 @@ void ili9341_tests(void)
 	//Scren tests
 	get_font_header();
 	//fill whole screen with black
-	/*unsigned int current_time = get_current_time();
+	get_current_time();
 	ili9341_fill_color(0,0,(ili9341_get_width()-1),(ili9341_get_height()-1),COLOR_BLACK);
-	calculate_execution_time(current_time);*/
+	calculate_execution_time();
 	/*ili9341_set_vertical_scrolling_definition(0,ili9341_get_height(),0);
 	ili9341_print_string_newline("This is a print test : 1",COLOR_YELLOW);
 	ili9341_print_string_newline("This is a print test : 2",COLOR_RED);
@@ -655,11 +654,14 @@ void ili9341_tests(void)
 	ili9341_print_string_newline("This is a print test : 25",COLOR_RED);*/
 	
 	//unsigned int current_time = get_current_time();
-	ili9341_load_image(a_image.pixel_data, a_image.width, a_image.height,a_image.bytes_per_pixel);
+	//ili9341_load_image(a_image.pixel_data, a_image.width, a_image.height,a_image.bytes_per_pixel);
 	//time_sleep(5000);
 	/*ili9341_load_image(f_image.pixel_data, f_image.width, f_image.height,f_image.bytes_per_pixel);
 	time_sleep(5000);
 	ili9341_load_image(atoz_image.pixel_data, atoz_image.width, atoz_image.height,atoz_image.bytes_per_pixel);*/
+	
+	//ili9341_fill_color_dma(30,30,40,40,COLOR_BLACK);
+
 	
 }
 

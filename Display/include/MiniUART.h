@@ -32,6 +32,9 @@ int wait_till_transmitter_done(void);
 void flush_uart_rx_buffer(void);
 int uart_tests(void);
 void init_uart_buf(void);
+void uart_print_unsigned_number(unsigned int num);
+void uart_printf(char* print_str,...);
+void uart_printf_tests(void);
 
 
 //xmodem enums

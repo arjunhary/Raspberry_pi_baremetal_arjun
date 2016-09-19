@@ -4,10 +4,11 @@ vpath %.c src
 vpath %.o obj
 vpath %.h include
 
-COPS = -g -Wall -Wno-trigraphs -O2 -nostdlib -ffreestanding -mcpu=cortex-a7 -mtune=arm1176jzf-s
+COPS = -g -Wall -Wno-trigraphs -O2 -nostdlib -ffreestanding -mcpu=cortex-a7 -mtune=arm1176jzf-s -fstack-usage
 
-OBJS = display.o utility.o SPI.o I2C.o Ft6206_cap_touch.o UART.o Interrupt_handler.o DMA.o main.o vectors.o 
+OBJS = vectors.o main.o arm_utility.o display.o utility.o SPI.o I2C.o Ft6206_cap_touch.o UART.o Interrupt_handler.o DMA.o smp.o mmu.o bluefruit.o
 
+SRC_DIR = src/
 OBJ_DIR = obj/
 OUTPUT_FOLDER = output
 INCLUDE_FOLDER = include
@@ -25,15 +26,15 @@ clean :
 	rm -f ./output/*.img
 	rm -f ./output/*.hex
 
-$(OBJ_DIR)%.o: %.c $(INCLUDE_FOLDER)/*.h
-	@ECHO "$< -> $@"
+$(OBJ_DIR)%.o: $(SRC_DIR)%.c $(INCLUDE_FOLDER)/*.h
+#	@ECHO "$< -> $@"
 	$(ARMGNU)-gcc $(COPS) -c -o $@ $<	
 	
-$(OBJ_DIR)%.o: %.s
-	$(ARMGNU)-as -c -o $@ $<	
-	
+$(OBJ_DIR)%.o: %.S 
+	$(ARMGNU)-gcc -c -o $@ $<	
+
 $(OUTPUT_FOLDER)/kernel.img : $(OBJS_WITH_PATH) loader
-	@ECHO "$(OBJS_WITH_PATH)"
+#	@ECHO "$(OBJS_WITH_PATH)"
 	$(ARMGNU)-ld $(OBJS_WITH_PATH) -T loader -o ./output/display.elf
 	$(ARMGNU)-objdump -D $(OUTPUT_FOLDER)/display.elf > $(OUTPUT_FOLDER)/display.list
 	$(ARMGNU)-objcopy $(OUTPUT_FOLDER)/display.elf -O binary $(OUTPUT_FOLDER)/kernel.img

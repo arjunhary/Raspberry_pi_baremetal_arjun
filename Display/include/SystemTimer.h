@@ -1,4 +1,5 @@
-//Clock is running at 1MHz
+#ifndef __SYSTEM_TIMER__H__
+#define __SYSTEM_TIMER__H__
 
 #define SYSTEM_TIMER_BASE_ADDRESS 0x3F003000
 
@@ -24,3 +25,5 @@ typedef union __attribute__((packed)) _System_timer_control_reg_t
     } mBits;  
     unsigned int   mAsU32;
 } System_timer_control_Reg_t;
+
+#endif //__SYSTEM_TIMER__H__

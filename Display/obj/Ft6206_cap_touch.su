@@ -1,0 +1,17 @@
+Ft6206_cap_touch.c:13:5:FT6206_get_id	8	static
+Ft6206_cap_touch.c:72:5:FT6206_get_chip_select	16	static
+Ft6206_cap_touch.c:82:5:FT6206_get_period_active_mode	16	static
+Ft6206_cap_touch.c:92:5:FT6206_get_gesture_id	16	static
+Ft6206_cap_touch.c:102:5:FT6206_get_control	16	static
+Ft6206_cap_touch.c:112:5:FT6206_get_power_mode	16	static
+Ft6206_cap_touch.c:122:5:FT6206_get_interrupt_mode	16	static
+Ft6206_cap_touch.c:132:5:FT6206_set_interrupt_mode	24	static
+Ft6206_cap_touch.c:155:5:FT6206_get_current_operating_state	16	static
+Ft6206_cap_touch.c:165:5:FT6206_set_control	24	static
+Ft6206_cap_touch.c:187:5:FT6206_get_device_mode	16	static
+Ft6206_cap_touch.c:197:5:FT6206_set_device_mode	24	static
+Ft6206_cap_touch.c:219:5:FT6206_set_threshold	32	static
+Ft6206_cap_touch.c:239:5:FT6206_get_touch_point_1	32	static
+Ft6206_cap_touch.c:275:5:FT6206_get_touch_point_2	32	static
+Ft6206_cap_touch.c:30:5:FT6206_get_num_touches	16	static
+Ft6206_cap_touch.c:309:6:FT6206_tests	16	static

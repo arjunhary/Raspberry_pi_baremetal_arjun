@@ -1,0 +1,12 @@
+Interrupt_handler.c:8:6:data_abort_handler	0	static
+Interrupt_handler.c:13:5:disable_system_timer_interrupt	16	static
+Interrupt_handler.c:22:5:is_system_timer_interrupt_pending	8	static
+Interrupt_handler.c:37:5:is_gpio_interrupt_pending	16	static
+Interrupt_handler.c:55:5:enable_system_timer_irq_interrupt	24	static
+Interrupt_handler.c:78:5:enable_Ft6206_touch_screen_i2c_interrupt	32	static
+Interrupt_handler.c:116:5:disable_Ft6206_touch_screen_i2c_interrupt	16	static
+Interrupt_handler.c:147:5:enable_system_timer_fiq_interrupt	24	static
+Interrupt_handler.c:171:40:c_fiq_handler	32	static
+Interrupt_handler.c:199:6:c_irq_handler	16	static
+Interrupt_handler.c:225:6:polled_sys_timer_interrupt_handler	16	static
+Interrupt_handler.c:256:7:polled_Ft6206_irq_handler	24	static

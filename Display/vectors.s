@@ -3,7 +3,12 @@
 ;@-------------------------------------------------------------------------
 
 
-.globl _start
+.text 
+
+
+#include "include/sysconfig.h"
+
+	.globl _start
 _start:
     ldr pc,reset_handler
     ldr pc,undefined_handler
@@ -16,37 +21,75 @@ _start:
 reset_handler:      .word reset
 undefined_handler:  .word hang
 swi_handler:        .word hang
-prefetch_handler:   .word hang
-data_handler:       .word hang
+prefetch_handler:   .word abort
+data_handler:       .word abort
 unused_handler:     .word hang
 irq_handler:        .word irq
 fiq_handler:        .word hang
 
 reset:
-    mov r0,#0x8000
+    mov r0,#MEM_KERNEL_START
     mov r1,#0x0000
     ldmia r0!,{r2,r3,r4,r5,r6,r7,r8,r9}
     stmia r1!,{r2,r3,r4,r5,r6,r7,r8,r9}
     ldmia r0!,{r2,r3,r4,r5,r6,r7,r8,r9}
     stmia r1!,{r2,r3,r4,r5,r6,r7,r8,r9}
-
 	
+	;@ (PSR_ABORT_MODE|PSR_FIQ_DIS|PSR_IRQ_DIS)
+    mov r0,#0xD7
+    msr cpsr_c,r0
+    mov sp,#CORE0_EXCEPTION_STACK
+
     ;@ (PSR_IRQ_MODE|PSR_FIQ_DIS|PSR_IRQ_DIS)
     mov r0,#0xD2
     msr cpsr_c,r0
-    mov sp,#0x8000
+    mov sp,#CORE0_IRQ_STACK
 
     ;@ (PSR_FIQ_MODE|PSR_FIQ_DIS|PSR_IRQ_DIS)
-    ;mov r0,#0xD1
-    ;msr cpsr_c,r0
-    ;mov sp,#0x4000
+    mov r0,#0xD1
+    msr cpsr_c,r0
+    mov sp,#CORE0_FIQ_STACK
 
     ;@ (PSR_SVC_MODE|PSR_FIQ_DIS|PSR_IRQ_DIS)
     mov r0,#0xD3
     msr cpsr_c,r0
-    mov sp,#0x8000000
+    mov sp,#CORE0_CODE_STACK
 	
     bl notmain
+	
+.globl start_secondary_core
+start_secondary_core:
+	mrc	p15, 0, r1, c0, c0, 5	
+	and	r1, r1, #CORES-1		/* get CPU ID */
+	add r1 , r1,#1
+	mov r2,#CORE_TOTAL_STACK_SIZE 
+	mul r3,r1,r2
+	add r3, r3, #MEM_STACK_START 	 /*r3 has the top most addr of the stack now */
+	
+	;@ (PSR_ABORT_MODE|PSR_FIQ_DIS|PSR_IRQ_DIS)
+    mov r0,#0xD7
+    msr cpsr_c,r0
+    mov sp,r3
+
+    ;@ (PSR_IRQ_MODE|PSR_FIQ_DIS|PSR_IRQ_DIS)
+    mov r0,#0xD2
+    msr cpsr_c,r0
+	sub r3,r3,#EXCEPTION_STACK_SIZE
+    mov sp,r3
+
+    ;@ (PSR_FIQ_MODE|PSR_FIQ_DIS|PSR_IRQ_DIS)
+    mov r0,#0xD1
+    msr cpsr_c,r0
+	sub r3,r3,#IRQ_STACK_SIZE
+    mov sp,r3
+
+    ;@ (PSR_SVC_MODE|PSR_FIQ_DIS|PSR_IRQ_DIS)
+    mov r0,#0xD3
+    msr cpsr_c,r0
+	sub r3,r3,#FIQ_STACK_SIZE
+    mov sp,r3
+	
+    bl sysinit_secondary
 	
 hang: b hang
 
@@ -82,70 +125,42 @@ enable_fiq:
 .globl BRANCHTO
 BRANCHTO:
     bx r0
+	
+.globl ldrex
+ldrex:
+	ldrex r0,[r1]
+	bx lr
 
-.globl Read_CPSR_Register
-Read_CPSR_Register:
-	mrs r0,cpsr
+.globl strex
+strex:
+	strex r0,r1,[r2]
 	bx lr
 	
-.globl Read_ARM_Auxiliary_Control_Register
-Read_ARM_Auxiliary_Control_Register:
-	mrc p15, 0, r0, c1, c0, 1
-	bx lr
-	
-
-.globl Read_ARM_System_Control_Register
-Read_ARM_System_Control_Register:	
-	mrc p15, 0, r0, c1, c0, 0
-	bx lr
-	
-.globl enable_instruction_cache
-enable_instruction_cache:	
-	mrc p15, 0, r0, c1, c0, 0
-	orr r0,r0,#0x00001000
-	mcr p15, 0, r0, c1, c0, 0
-	bx lr
-	
-.globl enable_data_and_unified_cache
-enable_data_and_unified_cache:	
+.globl enable_L1_cache
+enable_L1_cache:	
 	mrc p15, 0, r0, c1, c0, 0
 	orr r0,r0,#0x00000004
 	mcr p15, 0, r0, c1, c0, 0
 	bx lr
-	
+		
 .globl enable_L2_cache
 enable_L2_cache:
 	mrc p15, 0, r0, c1, c0, 1
 	orr r0,r0,#0x00000002
 	mcr p15, 0, r0, c1, c0, 1
 	bx lr
-	
-
-.globl Read_Watchpoint_control_Register0
-Read_Watchpoint_control_Register0:		
-	mrc p14, 0, r0, c0, c0, 7
-	bx lr
-
-.globl Read_Breakpoint_control_Register0
-Read_Breakpoint_control_Register0:		
-	mrc p14, 0, r0 , c0, c0, 4
-	bx lr
-	
-.globl Read_Interrupt_status_Register
-Read_Interrupt_status_Register:		
-	mrc p15, 0, r0, c12, c1, 0
-	bx lr
-
-.globl Read_Multiprocessor_affinity_register
-Read_Multiprocessor_affinity_register:		
-	mrc p15, 0, r0, c0, c0, 5
-	bx lr
-
+		
 irq:
     push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
     bl c_irq_handler
     pop  {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
     subs pc,lr,#4
+	
+abort:
+    push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
+    bl data_abort_handler
+
+	
 	
 	
 ;@-------------------------------------------------------------------------

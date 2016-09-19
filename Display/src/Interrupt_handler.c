@@ -5,6 +5,10 @@
 #include "./../include/SystemTimer.h"
 #include "./../include/GPIO.h"
 
+void data_abort_handler(void)
+{
+	LED_fastblink();
+}
 
 int disable_system_timer_interrupt(void)
 {

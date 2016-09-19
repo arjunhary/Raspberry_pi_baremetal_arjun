@@ -11,6 +11,7 @@
 #define INTERRUPT_DISABLE_IRQ2			INTERRUPT_BASE_ADDRESS+0x220
 #define INTERRUPT_DISABLE_BASICIRQ		INTERRUPT_BASE_ADDRESS+0x224
 
+void data_abort_handler(void);
 void enable_irq(void);
 void enable_fiq(void);
 int enable_Ft6206_touch_screen_i2c_interrupt(void);

@@ -1,0 +1,14 @@
+SPI.c:61:6:spi_init	32	static
+SPI.c:98:6:set_DC_low_for_command	16	static
+SPI.c:107:6:set_DC_high_for_data	16	static
+SPI.c:116:6:stop_spi_transfer	8	static
+SPI.c:126:6:spi_dma_enable_and_adcs	16	static
+SPI.c:136:6:spi_dma_disable_and_adcs	16	static
+SPI.c:145:6:start_spi_transfer	24	static
+SPI.c:7:5:spi_sendreadcommand	32	static
+SPI.c:157:6:wait_for_transfer_complete	16	static
+SPI.c:170:6:wait_till_rx_fifo_has_data	16	static
+SPI.c:185:6:wait_till_tx_fifo_not_full	16	static
+SPI.c:198:5:spi_sendcommand	32	static
+SPI.c:245:5:spi_sendbytes	16	static
+SPI.c:274:5:spi_getbytes	24	static

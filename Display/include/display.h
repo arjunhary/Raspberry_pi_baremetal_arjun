@@ -154,5 +154,6 @@ void ili9341_fill_color(short x0, short y0, short x1, short y1,int color);
 void ili9341_fill_color_dma(short x0, short y0, short x1, short y1,int color);
 void ili9341_turn_display_off(void);
 int ili9341_get_screen_memory(short x0, short y0, short x1, short y1);
+void ili9341_tests(void);
 
 #endif

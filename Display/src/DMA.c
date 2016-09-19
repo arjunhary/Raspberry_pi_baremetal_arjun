@@ -1,7 +1,9 @@
 #include "./../include/DMA.h"
 #include "./../include/utility.h"
+#include "./../include/arm_utility.h"
 #include "./../include/display.h"
 #include "./../include/SPI.h"
+#include "./../include/MiniUART.h"
 
 
 int DMA_wait_for_transfer_complete(int channel)
@@ -198,6 +200,8 @@ int DMA_SPI_Write_test(void)
 	PUT32(SPI_DATA_LENGTH,4096);
 	PUT32(SPI_CONTROL_STATUS_REGISTER,0x000009B0);
 	
+	datamembarrier();
+	
 	unsigned int* source_addr = (unsigned int*)TFT_Screen_frambuffer;
 	unsigned int* dest_addr   = (unsigned int*)(0x3F204004);
 	
@@ -213,12 +217,15 @@ int DMA_SPI_Write_test(void)
 	dma_transfer_spi_rx_information.mAsU32 = 0;
 	dma_transfer_spi_rx_information.mBits.DMA_source_address_increment = 0;
 	dma_transfer_spi_rx_information.mBits.DMA_Destination_address_increment = 0;
-	//dma_transfer_spi_rx_information.mBits.DMA_source_PERMAP = 7;
-	//dma_transfer_spi_rx_information.mBits.DMA_source_DREQ = 1;
+	dma_transfer_spi_rx_information.mBits.DMA_source_PERMAP = 7;
+	dma_transfer_spi_rx_information.mBits.DMA_source_DREQ = 1;
 
 	
 	DMA_setup_CB(1,(unsigned int)dest_addr,(unsigned int)&spi_dummy_receive,4096,dma_transfer_spi_rx_information.mAsU32,1);
 	DMA_setup_CB(0,(unsigned int)source_addr,(unsigned int)dest_addr,4096,dma_transfer_spi_tx_information.mAsU32,0);
+	
+	datamembarrier();
+	
 	DMA_Start_transfer(1);
 	DMA_Start_transfer(0);
 	DMA_wait_for_transfer_complete(0);
@@ -229,20 +236,36 @@ int DMA_SPI_Write_test(void)
 
 int DMA_test()
 {
-	unsigned int* source_addr =  (unsigned int*)0x00100000;
-	unsigned int* dest_addr   =  (unsigned int*)0x00101000;
-	unsigned int* source_addr1 = (unsigned int*)0x00102000;
-	unsigned int* dest_addr1   = (unsigned int*)0x00103000;
+	unsigned int* source_addr =  (unsigned int*)0x10000000;
+	unsigned int* dest_addr   =  (unsigned int*)0x10010000;
+	unsigned int* source_addr1 = (unsigned int*)0x10020000;
+	unsigned int* dest_addr1   = (unsigned int*)0x10030000;
 	
 	DMA_Transfer_Information_Reg_t dma_transfer_information;
 	dma_transfer_information.mAsU32 = 0;
 	dma_transfer_information.mBits.DMA_source_address_increment = 1;
 	dma_transfer_information.mBits.DMA_Destination_address_increment = 1;
 
-	memset((void*)0x00100000,0xDE,512);
-	memset(dest_addr,0x00,512);
-	memset((void*)0x00102000,0xAB,512);
-	memset(dest_addr1,0x00,512);
+	memset((void*)source_addr,0xDE,65536);
+	memset(dest_addr,0x00,65536);
+	memset((void*)source_addr1,0xAB,65536);
+	memset(dest_addr1,0x00,65536);
+	
+	if(memcmp((char*)source_addr,(char*)dest_addr,65536) == -1)
+	{
+		uart_print_string_newline("DMA Transfer 1 Successful");
+	}
+	else{
+		uart_print_string_newline("DMA Transfer 1 Not Successful");
+	}
+	
+	if(memcmp((char*)source_addr1,(char*)dest_addr1,65536) == -1)
+	{
+		uart_print_string_newline("DMA Transfer 2 Successful");
+	}
+	else{
+		uart_print_string_newline("DMA Transfer 2 Not Successful");
+	}
 	
 	DMA_setup_CB(1,(unsigned int)source_addr1,(unsigned int)dest_addr1,512,dma_transfer_information.mAsU32,0);
 	DMA_Start_transfer(1);

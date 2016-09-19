@@ -1,0 +1,2 @@
+mmu.c:14:6:init_page_table	8	static
+mmu.c:58:6:mmu_init	8	static
