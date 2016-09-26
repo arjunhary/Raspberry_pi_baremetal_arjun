@@ -1,6 +1,0 @@
-DMA.c:9:5:DMA_wait_for_transfer_complete	16	static
-DMA.c:59:5:DMA_channel_reset	8	static
-DMA.c:95:5:DMA_Start_transfer	8	static
-DMA.c:133:5:DMA_setup_CB	48	static
-DMA.c:194:5:DMA_SPI_Write_test	32	static
-DMA.c:237:5:DMA_test	32	static

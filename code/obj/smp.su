@@ -1,0 +1,7 @@
+smp.c:41:6:core0_idleloop	8	static
+smp.c:102:6:core3_function	8	static
+smp.c:75:6:core2_function	8	static
+smp.c:49:6:core1_function	8	static
+smp.c:15:6:core0_function	8	static
+smp.c:129:5:multicore_init	16	static
+smp.c:178:6:sysinit_secondary	8	static

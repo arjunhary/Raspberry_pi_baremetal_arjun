@@ -1,0 +1,6 @@
+synchronization.c:12:6:init_critical_section	0	static
+synchronization.c:17:6:enter_critical_section	8	static
+synchronization.c:37:6:sem_dec	8	static
+synchronization.c:61:6:exit_critical_section	8	static
+synchronization.c:78:6:sem_inc	8	static
+synchronization.c:97:6:ex_tests	16	static
