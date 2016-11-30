@@ -4,6 +4,8 @@
 #include "./../include/interrupts.h"
 #include "./../include/SystemTimer.h"
 #include "./../include/GPIO.h"
+#include "./../include/arm_utility.h"
+
 
 void enable_irq(void)
 {
@@ -268,13 +270,12 @@ void polled_sys_timer_interrupt_handler(void)
 
 
 
-
 void  polled_Ft6206_irq_handler (void)
 {
 	volatile GPIO_0_31_t gpio_event_detect_1;
 	GPIO_0_31_t gpio_event_clear;
 	gpio_event_clear.mAsU32 = 0;
-	unsigned int level_detect = 0;
+	//unsigned int level_detect = 0;
 	gpio_event_detect_1.mAsU32 = 0;
 	if(is_gpio_interrupt_pending())
 	{	
@@ -283,7 +284,7 @@ void  polled_Ft6206_irq_handler (void)
 		{
 			gpio_event_clear.mBits.GPIO24 = 1;
 			PUT32(GPIO_REG_GPEDS0,gpio_event_clear.mAsU32);
-			level_detect = (int)GET32(GPIO_REG_GPLEV0);
+			//level_detect = (int)GET32(GPIO_REG_GPLEV0);
 			FT6206_get_num_touches();
 		}
 	}

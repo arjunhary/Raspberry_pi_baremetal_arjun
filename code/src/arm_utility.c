@@ -2,7 +2,20 @@
 #include "./../include/arm_utility.h"
 #include "./../include/MiniUART.h"
 
+void PUT32(unsigned int addr, unsigned int value)
+{
+    asm volatile("str r1,[r0]");
+} 
 
+unsigned int GET32(unsigned int addr)
+{   
+	asm volatile("ldr r0,[r0]");
+}
+
+void dummy ( unsigned int dummy_value)
+{
+    asm volatile("bx lr");
+}
 
 void SET_BREAKPOINT(void)
 {

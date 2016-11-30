@@ -5,8 +5,9 @@
 
 .text 
 
-
 #include "include/sysconfig.h"
+
+.EXTERN __heap_limit__
 
 	.globl _start
 _start:
@@ -19,11 +20,11 @@ _start:
     ldr pc,irq_handler
     ldr pc,fiq_handler	
 reset_handler:      .word reset
-undefined_handler:  .word hang
-swi_handler:        .word hang
+undefined_handler:  .word abort
+swi_handler:        .word abort
 prefetch_handler:   .word abort
 data_handler:       .word abort
-unused_handler:     .word hang
+unused_handler:     .word abort
 irq_handler:        .word irq
 fiq_handler:        .word hang
 
@@ -92,22 +93,6 @@ start_secondary_core:
     bl sysinit_secondary
 	
 hang: b hang
-
-
-.globl PUT32
-PUT32:
-    str r1,[r0]
-    bx lr
-
-.globl GET32
-GET32:
-    ldr r0,[r0]
-    bx lr
-
-
-.globl dummy
-dummy:
-    bx lr
 	
 irq:
     push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}

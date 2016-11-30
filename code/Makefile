@@ -7,7 +7,7 @@ vpath %.h include
 COPS = -g -Wall -Wno-trigraphs -O2 -nostdlib -ffreestanding -mcpu=cortex-a7 -mtune=arm1176jzf-s -fstack-usage
 
 OBJS =  vectors.o arm_utility.o display.o utility.o SPI.o I2C.o Ft6206_cap_touch.o UART.o \
-		Interrupts.o DMA.o synchronization.o smp.o mmu.o bluefruit.o main.o
+		Interrupts.o DMA.o synchronization.o smp.o mmu.o fifo.o bluefruit.o main.o
 
 SRC_DIR = src/
 OBJ_DIR = obj/
@@ -27,16 +27,16 @@ clean :
 	rm -f ./output/*.img
 	rm -f ./output/*.hex
 
-$(OBJ_DIR)%.o: $(SRC_DIR)%.c $(INCLUDE_FOLDER)/*.h
+$(OBJ_DIR)%.o: $(SRC_DIR)%.c $(INCLUDE_FOLDER)/*.h Makefile
 #	@ECHO "$< -> $@"
 	$(ARMGNU)-gcc $(COPS) -c -o $@ $<	
 	
-$(OBJ_DIR)%.o: %.S 
+$(OBJ_DIR)%.o: %.S $(INCLUDE_FOLDER)/*.h Makefile
 	$(ARMGNU)-gcc -c -o $@ $<	
 
-$(OUTPUT_FOLDER)/kernel.img : $(OBJS_WITH_PATH) loader
+$(OUTPUT_FOLDER)/kernel.img : $(OBJS_WITH_PATH) loader Makefile 
 #	@ECHO "$(OBJS_WITH_PATH)"
-	$(ARMGNU)-ld $(OBJS_WITH_PATH) -T loader -o ./output/display.elf
+	$(ARMGNU)-ld $(OBJS_WITH_PATH) -Map ./output/display.map -T loader -o ./output/display.elf
 	$(ARMGNU)-objdump -D $(OUTPUT_FOLDER)/display.elf > $(OUTPUT_FOLDER)/display.list
 	$(ARMGNU)-objcopy $(OUTPUT_FOLDER)/display.elf -O binary $(OUTPUT_FOLDER)/kernel.img
 	$(ARMGNU)-objcopy $(OUTPUT_FOLDER)/display.elf -O binary $(OUTPUT_FOLDER)/display.bin

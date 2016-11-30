@@ -1,2 +1,2 @@
-main.c:20:6:init_all	8	static
-main.c:50:5:notmain	8	static
+main.c:24:6:init_all	8	static
+main.c:56:5:notmain	144	static

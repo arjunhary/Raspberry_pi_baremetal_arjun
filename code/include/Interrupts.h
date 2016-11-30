@@ -1,3 +1,6 @@
+#ifndef __INTERRUPTS__H__
+#define __INTERRUPTS__H__
+
 #define INTERRUPT_BASE_ADDRESS 0x3F00B000
 
 #define INTERRUPT_IRQ_BASIC_PENDING		INTERRUPT_BASE_ADDRESS+0x200
@@ -363,3 +366,5 @@ typedef union __attribute__((packed)) _basic_inteerupt_disable_reg_t
     } mBits;  
     unsigned int   mAsU32;
 } Interrupt_basic_disable_reg_t;
+
+#endif

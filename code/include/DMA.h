@@ -1,3 +1,5 @@
+#ifndef __DMA__H__
+#define __DMA__H__
 
 #define DMA_BASE_ADDRESS 0x3F007000
 
@@ -183,3 +185,5 @@ int DMA_SPI_Write_test(void);
 int DMA_Start_transfer(int channel);
 int DMA_channel_reset(int channel);
 int DMA_wait_for_transfer_complete(int channel);
+
+#endif

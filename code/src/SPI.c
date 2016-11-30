@@ -1,6 +1,9 @@
 #include "./../include/SPI.h"
 #include "./../include/GPIO.h"
 #include "./../include/utility.h"
+#include "./../include/MiniUART.h"
+#include "./../include/arm_utility.h"
+#include "./../include/bluefruit.h"
 
 extern unsigned int start_time;
 
@@ -83,7 +86,7 @@ void spi_init(void)
 	//Set clk speed
 	SPI_clk_Reg_t spiclkspeed;
 	spiclkspeed = (SPI_clk_Reg_t)GET32(SPI_CLK_DIVIDER);
-	spiclkspeed.mBits.clk_div = BCM2835_SPI_CLOCK_DIVIDER_8;
+	spiclkspeed.mBits.clk_div = BCM2835_SPI_CLOCK_DIVIDER_128;
 	PUT32(SPI_CLK_DIVIDER,spiclkspeed.mAsU32);
 	
 	//Set the SPI control register
@@ -147,10 +150,10 @@ void start_spi_transfer(int chip_select)
 	//Set the control register . Clear the fifo bits and set TA =1. Assumes chip select 0
 	SPI_control_Reg_t spictrlreg;
 	spictrlreg = (SPI_control_Reg_t) GET32(SPI_CONTROL_STATUS_REGISTER);
+	spictrlreg.mAsU32 = 0x000000B0;
 	spictrlreg.mBits.chip_select = chip_select;
 	spictrlreg.mBits.transfer_active = 1;
 	spictrlreg.mBits.clear_fifo = 3;
-	//spictrlreg.mAsU32 = 0x000000B0;
 	PUT32(SPI_CONTROL_STATUS_REGISTER,spictrlreg.mAsU32);
 }
 
@@ -252,6 +255,8 @@ int spi_sendbytes(int chip_select,unsigned int number_of_bytes,unsigned char*ptr
 	//Set the control register . Clear the fifo bits and set TA =1
 	start_spi_transfer(chip_select);
 	
+	time_sleep_us(160);
+	
 	for(i =0; i<number_of_bytes; i++)
 	{	
 		GET32(SPI_TX_RX_FIFO);
@@ -259,7 +264,8 @@ int spi_sendbytes(int chip_select,unsigned int number_of_bytes,unsigned char*ptr
 		//Wait till the TX buffer has space to send a byte
 		//wait_till_tx_fifo_not_full();		
 		
-		PUT32(SPI_TX_RX_FIFO,(ptr[i]));
+		PUT32(SPI_TX_RX_FIFO,ptr[i]);
+		time_sleep_us(30);
 	}			
 	//Wait for transfer to be complete
 	void wait_for_transfer_complete();
@@ -274,22 +280,48 @@ int spi_sendbytes(int chip_select,unsigned int number_of_bytes,unsigned char*ptr
 int spi_getbytes(int chip_select,unsigned char*ptr, int number_of_bytes)
 {
 	int i =0;
-	unsigned int data = 0;
+	volatile unsigned int data = BLUEFRUIT_SLAVE_NOT_READY;
+	
+	//Set GPIO25
+	set_DC_high_for_data();
 	
 	//Set the control register . Clear the fifo bits and set TA =1
 	start_spi_transfer(chip_select);
-		
-	//Set GPIO25
-	set_DC_high_for_data();
-		
-	//Wait till there is data
-	wait_till_rx_fifo_has_data();
+	
+	time_sleep_us(160);
 				
-	for(i=0;i <number_of_bytes;i++)
+	if(chip_select == (int)BLUEFRUIT_SPI_CHIP_SELECT)
+	{
+		while(1)
+		{
+			PUT32(SPI_TX_RX_FIFO,0x00);
+			//Wait till there is data
+			wait_till_rx_fifo_has_data();
+			//Get the data from the fifo
+			data = GET32(SPI_TX_RX_FIFO);
+			if((data == (unsigned int)BLUEFRUIT_SLAVE_NOT_READY) || (data == (unsigned int)BLUEFRUIT_SLAVE_READ_OVERFLOW))
+			{
+				ptr[i] = data;
+				//Set TA = 0 and clear the fifo
+				stop_spi_transfer();
+				return -1;
+			}
+			else
+			{				
+				break;
+			}
+		}
+		ptr[i] = data;
+	}
+	
+	for(i=1;i <number_of_bytes;i++)
 	{	
+		PUT32(SPI_TX_RX_FIFO,0x00);
+		//Wait till there is data
+		wait_till_rx_fifo_has_data();
 		//Get the data from the fifo
 		data = GET32(SPI_TX_RX_FIFO);
-		ptr[i] = (char)data;
+		ptr[i] = (unsigned char)data;
 	}
 	
 	//Wait for transfer to be complete
@@ -297,6 +329,6 @@ int spi_getbytes(int chip_select,unsigned char*ptr, int number_of_bytes)
 
 	//Set TA = 0 and clear the fifo
 	stop_spi_transfer();
-	
+
 	return 0;
 }

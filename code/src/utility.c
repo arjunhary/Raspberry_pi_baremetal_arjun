@@ -5,13 +5,13 @@
 #include "./../include/utility.h"
 #include "./../include/arm_utility.h"
 #include "./../include/sysconfig.h"
+#include "./../include/synchronization.h"
+#include "./../include/bluefruit.h"
 #include <stdarg.h>
+#include <stdint.h>
 
 
 unsigned char uart_buf[UART_BUF_SIZE];
-
-unsigned int current_time_lsb = 0;
-unsigned int current_time_msb = 0;
 
 int factorial(int n)
 {
@@ -21,6 +21,31 @@ int factorial(int n)
 		return 1;
 	}
 	return (n*factorial(n-1));
+}
+
+//0 means not a match
+//1 is a match
+int strncmp(char* str1, char*str2, int num_of_bytes)
+{
+	int count = 0;
+	while((*str1) && (*str2))
+	{
+		if((*str1 != *str2) || (count == num_of_bytes))
+		{
+			break;
+		}		
+		count++;		
+		str1++;
+		str2++;
+	}
+	if(count == num_of_bytes)
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 
@@ -79,17 +104,6 @@ void arm_jtag_init(void)
 	PUT32(GPIO_REG_GPFSEL2,gpiofnsel2.mAsU32);	
 }
 
-/*void PUT32(unsigned int addr, unsigned int value)
-{
-	asm volatile("str r1,[r0]");
-}
-
-unsigned int GET32(unsigned int addr)
-{
-	asm volatile("ldr r0,[r0]");
-}*/
-
-
 void BRANCHTO(unsigned int addr)
 {
     asm volatile("bx r0");
@@ -100,7 +114,6 @@ int memcmp(void* addr1, void* addr2, int size)
 	int i =0;
 	if((get_memory_alignment((unsigned int)addr1) >= 32) && (get_memory_alignment((unsigned int)addr2) >= 32) &&(size%(unsigned int)sizeof(int) ==0))
 	{
-		//uart_print_string_newline("Doing 32 bit compare");
 		for(i =0; i< (size/(unsigned int)sizeof(int)); i++)
 		{
 			if(((int*)addr1)[i] != ((int*)addr2)[i])
@@ -115,7 +128,6 @@ int memcmp(void* addr1, void* addr2, int size)
 	}
 	else if((get_memory_alignment((unsigned int)addr1) == 16) && (get_memory_alignment((unsigned int)addr2) == 16) &&(size%(unsigned int)sizeof(short) ==0))
 	{
-		//uart_print_string_newline("Doing 16 bit compare");
 		for(i =0; i< (size/(unsigned int)sizeof(short)); i++)
 		{
 			if(((short*)addr1)[i] != ((short*)addr2)[i])
@@ -130,7 +142,6 @@ int memcmp(void* addr1, void* addr2, int size)
 	}
 	else
 	{
-		//uart_print_string_newline("Doing 8 bit compare");
 		for(i =0; i< size; i++)
 		{
 			if(((char*)addr1)[i] != ((char*)addr2)[i])
@@ -150,15 +161,30 @@ int memcmp(void* addr1, void* addr2, int size)
 void memcpy(void* dest,void *src,int length)
 {
 	int i=0;
-	char* char_src = (char*)src;
-	char* char_dest = (char*)dest;
-	for(i=0;i<length;i++)
+	if((get_memory_alignment((unsigned int)dest) >= 32) && (get_memory_alignment((unsigned int)src) >= 32) &&(length%(unsigned int)sizeof(int) ==0))
 	{
-		*char_dest=*char_src;
-		char_dest++;
-		char_src++;
+		uart_printf("\n Doing 32 bit copy");
+		for(i=0;i<(length/(unsigned int)sizeof(int));i++)
+		{
+			*(int*)dest++=*(int*)src++;
+		}
 	}
-	
+	else if((get_memory_alignment((unsigned int)dest) == 16) && (get_memory_alignment((unsigned int)src) == 16) &&(length%(unsigned int)sizeof(short) ==0))
+	{
+		uart_printf("\n Doing 16 bit copy");
+		for(i=0;i<(length/(unsigned int)sizeof(short));i++)
+		{
+			*(short*)dest++=*(short*)src++;
+		}
+	}
+	else
+	{
+		uart_printf("\n Doing 8 bit copy");
+		for(i=0;i<length;i++)
+		{
+			*(char*)dest++ = *(char*)src++;
+		}
+	}		
 }
 
 void memfill_pattern(void* dest,char* src,int length_in_bytes, int pattern_length_in_bytes)
@@ -177,25 +203,60 @@ void memfill_pattern(void* dest,char* src,int length_in_bytes, int pattern_lengt
 void memset(void* ptr,char value,int length_in_bytes)
 {
 	int i=0;
-	char* char_ptr = (char*)ptr;
-	for(i=0;i<length_in_bytes;i++)
+	int int_pattern = 0;
+	short short_pattern = 0;
+	if((get_memory_alignment((unsigned int)ptr) >= 32) && (length_in_bytes%(unsigned int)sizeof(int) ==0))
 	{
-		char_ptr[i]=value;
+		for(i =0; i< sizeof(int);i++)
+		{
+			((char*)&int_pattern)[i] = value;
+		}
+		for(i=0;i<(length_in_bytes/(unsigned int)sizeof(int));i++)
+		{
+			((int*)ptr)[i]=int_pattern;
+		}
 	}
+	else if((get_memory_alignment((unsigned int)ptr) == 16) && (length_in_bytes%(unsigned int)sizeof(short) ==0))
+	{
+		for(i =0; i< sizeof(short);i++)
+		{
+			((char*)&short_pattern)[i] = value;
+		}
+		for(i=0;i<(length_in_bytes/(unsigned int)sizeof(short));i++)
+		{
+			((short*)ptr)[i]=short_pattern;
+		}
+	}
+	else
+	{
+		for(i=0;i<length_in_bytes;i++)
+		{
+			((char*)ptr)[i]=value;
+		}
+	}
+	
 }
 
-void get_current_time(void)
+uint64_t get_current_time(void)
 {
-	current_time_lsb = GET32(SYSTEM_TIMER_CL0_REG_LSB);
-	current_time_msb = GET32(SYSTEM_TIMER_CL0_REG_MSB);
+	volatile unsigned int lsb = 0;
+	volatile unsigned int msb0 = 0;
+	volatile unsigned int msb1 = 1;
+	
+	do
+	{	msb0 = GET32(SYSTEM_TIMER_CL0_REG_MSB);
+		lsb  = GET32(SYSTEM_TIMER_CL0_REG_LSB);
+		msb1 = GET32(SYSTEM_TIMER_CL0_REG_MSB);
+	}while(msb0 != msb1);
+	return(((uint64_t)msb0 << 32)|lsb);
 }
 
-int calculate_execution_time(void)
+unsigned int calculate_execution_time(uint64_t start_time)
 {	
-	unsigned int execution_time_lsb = GET32(SYSTEM_TIMER_CL0_REG_LSB) - current_time_lsb;
-	unsigned int execution_time_msb = GET32(SYSTEM_TIMER_CL0_REG_MSB) - current_time_msb;
-	uart_printf("\nExecution Time : %u , %u uS",execution_time_msb,execution_time_lsb);
-	return 0;
+	uint64_t current_time = get_current_time();
+	uint32_t execution_time = current_time - start_time;
+	uart_printf("\nExecution Time : %u uS",execution_time);
+	return execution_time;
 }
 
 int time_sleep(unsigned int time_ms)
@@ -205,6 +266,21 @@ int time_sleep(unsigned int time_ms)
 	while(1)
 	{
 		if((GET32(SYSTEM_TIMER_CL0_REG_LSB) - start_tick) > (time_ms*1000))
+		{
+			break;
+		}
+	}
+	
+	return 0;
+}
+
+int time_sleep_us(unsigned int time_us)
+{
+	unsigned int start_tick = GET32(SYSTEM_TIMER_CL0_REG_LSB);
+	
+	while(1)
+	{
+		if((GET32(SYSTEM_TIMER_CL0_REG_LSB) - start_tick) > time_us)
 		{
 			break;
 		}
@@ -253,23 +329,23 @@ int LEDTurnoff(void)
 
 void cache_test(void)
 {
-	get_current_time();
+	uint64_t start_time = get_current_time();
 	memory_tests();
-	calculate_execution_time();
+	calculate_execution_time(start_time);
 	
 	datamembarrier();
 	enable_L1_cache();
 	time_sleep(1000);
-	get_current_time();
+	start_time = get_current_time();
 	memory_tests();
-	calculate_execution_time();
+	calculate_execution_time(start_time);
 	
 	datamembarrier();
 	enable_L2_cache();
 	time_sleep(1000);
-	get_current_time();
+	start_time = get_current_time();
 	memory_tests();
-	calculate_execution_time();
+	calculate_execution_time(start_time);
 	
 }
 
@@ -315,6 +391,7 @@ void memory_tests(void)
 	int i =0,cmp_result[100];
 	int loopcount = 5;
 	int size = 0x10000;
+	uint64_t start_time = 0;
 	unsigned int* addr1 	=  (unsigned int*)0x10000000;
 	unsigned int* addr2  	=  (unsigned int*)0x10010000;
 	unsigned int* addr3 	=  (unsigned int*)0x10040010;
@@ -331,7 +408,7 @@ void memory_tests(void)
 	datamembarrier();
 	
 	//Time start
-	get_current_time();
+	start_time = get_current_time();
 	for(i =0; i<loopcount;i++)
 	{
 		if(memcmp((char*)addr1, (char*)addr2,size)==0)
@@ -344,15 +421,15 @@ void memory_tests(void)
 		}
 	}
 	//TIme calculate
-	calculate_execution_time();
+	calculate_execution_time(start_time);
 	
 	if(cmp_result[0] == 1)
 	{
-		uart_print_string_newline("Memcmp successful");
+		uart_printf("\nMemcmp successful");
 	}
 	else
 	{
-		uart_print_string_newline("Memcmp not successful");
+		uart_printf("\nMemcmp not successful");
 	}
 	
 	//Test2
@@ -361,7 +438,7 @@ void memory_tests(void)
 	
 	datamembarrier();
 	//Time start
-	get_current_time();
+	start_time = get_current_time();
 	for(i =0; i<loopcount;i++)
 	{
 		if(memcmp((void*)addr3, (void*)addr4,size)==0)
@@ -374,15 +451,15 @@ void memory_tests(void)
 		}
 	}
 	//TIme calculate
-	calculate_execution_time();
+	calculate_execution_time(start_time);
 	
 	if(cmp_result[0] == 1)
 	{
-		uart_print_string_newline("Memcmp successful");
+		uart_printf("\nMemcmp successful");
 	}
 	else
 	{
-		uart_print_string_newline("Memcmp not successful");
+		uart_printf("\nMemcmp not successful");
 	}
 	
 	//Test3
@@ -391,7 +468,7 @@ void memory_tests(void)
 	
 	datamembarrier();
 	//Time start
-	get_current_time();
+	start_time = get_current_time();
 	for(i =0; i<loopcount;i++)
 	{
 		if(memcmp((void*)addr5, (void*)addr6,size)==0)
@@ -404,7 +481,7 @@ void memory_tests(void)
 		}
 	}
 	//TIme calculate
-	calculate_execution_time();
+	calculate_execution_time(start_time);
 	
 	if(cmp_result[0] == 1)
 	{
@@ -418,15 +495,33 @@ void memory_tests(void)
 
 void string_tests(void)
 {
-	uart_print_string_newline("Length :");
-	uart_print_number(strlen("Test"));
-	uart_print_string_newline("Length :");
-	uart_print_number(strlen("Test12345"));
-	uart_print_string_newline("Compare:");
-	uart_print_number(strcmp("Test12345","Test12345"));
-	uart_print_string_newline("Compare:");
-	uart_print_number(strcmp("Test1234","Test12345"));
+	uart_printf("\nString tests...");
+	uart_printf("\nlength of %s : %u","Test",strlen("Test"));
+	uart_printf("\nlength of %s : %u","Test12345",strlen("Test12345"));
+	uart_printf("\nCompare of %s and %s : %u","Test12345","Test12345",strcmp("Test12345","Test12345"));
+	uart_printf("\nCompare of %s and %s : %u","Test1234","Test12345",strcmp("Test1234","Test12345"));
+	uart_printf("\nCompare of first %d bytes of %s and %s : %u",5,"Test1234","Test12345",strncmp("Test1234","Test12345",5));		
+	uart_printf("\nCompare of first %d bytes of %s and %s : %u",2,"ab","a",strncmp("ab","a",2));
+	uart_printf("\nCompare of first %d bytes of %s and %s : %u",2,"ab","ab",strncmp("ab","ab",2));
+	uart_printf("\nCompare of first %d bytes of %s and %s : %u",3,"abcd","abc",strncmp("abcd","abc",3));
+	uart_printf("\nCompare of first %d bytes of %s and %s : %u",3,"abed","abc",strncmp("abed","abc",3));
 }
+
+
+void sizeof_tests(void)
+{
+	int a;
+	short b;
+	char c;
+	double d =560.23;
+	long e = 5*100;
+	long long f = 9223372036854775807;
+	int arr[10];
+	uart_printf("\nsizeof tests...");
+	uart_printf("\nMy size of int: %d, short: %d, char: %d, Double : %d , long: %d , Array: %d , long long :%d",sizeofvar(a),sizeofvar(b),sizeofvar(c),sizeofvar(d),sizeofvar(e),sizeofvar(arr),sizeofvar(f));
+	uart_printf("\nsize of int: %d, short: %d, char: %d, Double : %d , long: %d , long long: %d",sizeof(int),sizeof(short),sizeof(char),sizeof(double),sizeof(long),sizeof(long long));
+}
+
 
 extern unsigned int __heap_limit__;
 extern unsigned int __heap_start__;
@@ -437,34 +532,227 @@ extern unsigned int __stack_size__;
 
 void print_heap_size(void)
 {
-	uart_printf("\nHeap start : %x , size : %x",&(__heap_start__),&(__heap_size__));
+	uart_printf("\nHeap start : %x , size : %x  End : %x",&(__heap_start__),&(__heap_size__), &(__heap_limit__));
 }
 
-
-void sizeof_tests(void)
+void malloc_init(void)
 {
-	int a;
-	short b;
-	char c;
-	int arr[10];
-	uart_print_string_newline("sizeof tests:");
-	uart_print_number(sizeofvar(a));
-	uart_print_string(",");
-	uart_print_number(sizeofvar(b));
-	uart_print_string(",");
-	uart_print_number(sizeofvar(c));
-	uart_print_string(",");
-	uart_print_number(sizeofvar(arr));
-	uart_print_string(",");
-	uart_print_number((unsigned int)sizeof(int));
-	uart_print_string(",");
-	uart_print_number((unsigned int)sizeof(short));
-	uart_print_string(",");
-	uart_print_number((unsigned int)sizeof(char));
+	malloc_metadata_t* malloc_init = (malloc_metadata_t*)&(__heap_start__);
+	malloc_init->status = MALLOC_STATUS_FREE;
+	malloc_init->size = ((unsigned int)&(__heap_size__) - sizeof(malloc_metadata_t));
+	print_heap_size();
+}
+
+void print_malloc_blocks(void)
+{
+	uart_printf("\nMalloc Block Status...");
+	unsigned int heap_index = (unsigned int)&(__heap_start__);
+	malloc_metadata_t* malloc_metadata;
+	int block_index = 0;
+	while(heap_index < (unsigned int)&(__heap_limit__))
+	{
+		block_index++;
+		malloc_metadata = (malloc_metadata_t*)heap_index;
+		uart_printf("\nBlock : %d , Address Start : %x, size % %u , Status : %x ",block_index,(unsigned int)malloc_metadata, malloc_metadata->size, malloc_metadata->status);
+		heap_index += malloc_metadata->size + sizeof(malloc_metadata_t);
+	}
+}
+
+void* malloc(int number_of_bytes)
+{
+	if(number_of_bytes == 0)
+	{
+		return NULL;
+	}
+	
+	malloc_metadata_t *malloc_metadata,*malloc_metadata_newblock;
+	
+	unsigned int heap_index = (unsigned int)&(__heap_start__);
+	while(heap_index < (unsigned int)&(__heap_limit__))
+	{
+		malloc_metadata = (malloc_metadata_t*)heap_index;
+		
+		if((malloc_metadata->status == MALLOC_STATUS_FREE) && (malloc_metadata->size >= number_of_bytes))
+		{
+			//We found the block that we need
+			malloc_metadata_newblock = (malloc_metadata_t*)(heap_index + sizeof(malloc_metadata_t) + number_of_bytes);
+			malloc_metadata_newblock->status = MALLOC_STATUS_FREE;
+			malloc_metadata_newblock->size = (malloc_metadata->size - sizeof(malloc_metadata_t) - number_of_bytes);
+			
+			//Update the status of the old block
+			malloc_metadata->status = MALLOC_STATUS_OCCUPIED;
+			malloc_metadata->size   =  number_of_bytes;
+			return (void*)(heap_index+sizeof(malloc_metadata_t));
+		}
+		else
+		{
+			//Move to the next block
+			heap_index += malloc_metadata->size + sizeof(malloc_metadata_t);
+		}
+	}
+	return NULL;
+	
+}
+
+void free(void* ptr)
+{
+	if((ptr == NULL) || ((unsigned int)ptr < (unsigned int)&(__heap_start__)) || ((unsigned int)ptr > (unsigned int)&(__heap_limit__)))
+	{
+		uart_printf("\n Malloc Error: Trying to free Invalid address : %x",ptr);
+		return;
+	}
+	
+	malloc_metadata_t *malloc_metadata_free;
+		
+	malloc_metadata_free  = (malloc_metadata_t*)((unsigned int)ptr - sizeof(malloc_metadata_t));
+	if(malloc_metadata_free->status == MALLOC_STATUS_OCCUPIED)
+	{
+		malloc_metadata_free->status = MALLOC_STATUS_FREE;
+	}
+	else
+	{
+		uart_printf("\nMalloc Error: Trying to free u : %x",ptr);
+	}
+}
+
+void malloc_tests(void)
+{
+	void* ptr[12];
+	void* ptr1[12];
+	int i =0, j=0 , count = 0;
+	
+	//2d array of size 10x10
+	unsigned int** twod_array;
+	
+	for(i = 0; i < 12; i++)
+	{
+		ptr1[i] = malloc(0x10000-8);
+		uart_printf("\nMalloc address return : %x",ptr1[i]);
+	}
+	
+	for(i = 0; i < 12; i++)
+	{
+		ptr[i] = malloc(0x100000-8);
+		uart_printf("\nMalloc address return : %x",ptr[i]);
+	}
+
+	print_malloc_blocks();
+	
+	for(i = 0; i < 4; i++)
+	{
+		free(ptr[i]);
+	}
+	
+	print_malloc_blocks();
+	
+	malloc_garbage_collect();
+	
+	for(i = 0; i < 4; i++)
+	{
+		free(ptr1[i]);
+	}
+	malloc_garbage_collect();
+	
+	for(i = 0; i< 100; i++)
+	{
+		malloc(0x100);
+	}
+	
+	//test 2d array allocation
+	twod_array = (unsigned int**)malloc(10*sizeof(unsigned int*));
+	if(twod_array == NULL)
+	{
+		uart_printf("\n2d array allocation error");
+	}
+	
+	for(i =0; i< 10; i++)
+	{
+		twod_array[i] = (unsigned int*)malloc(10*sizeof(unsigned int));
+		if(twod_array[i] == NULL)
+		{
+			uart_printf("\nsub array 2d array allocation error");
+		}
+	}
+	
+	for(i =0; i< 10; i++)
+	{
+		for(j = 0; j < 10; j++)
+		{
+			twod_array[i][j] = count;
+			count++;
+		}
+	}
+		
+	print_malloc_blocks();
+	
+	uart_printf("\n");
+	for(i =0; i< 10; i++)
+	{
+		for(j = 0; j < 10; j++)
+		{
+			uart_printf(" %u ",twod_array[i][j]);
+		}
+	}
+	
+	for(i = 0; i< 10; i++)
+	{
+		free(twod_array[i]);
+	}
+	
+	free(twod_array);
+	malloc_garbage_collect();
+	print_malloc_blocks();
+}
+
+void malloc_garbage_collect(void)
+{
+	uart_printf("\nEntering garbage collection...");
+	malloc_metadata_t *malloc_metadata,*malloc_metadata_nextfreeblock;
+	
+	unsigned int heap_index = (unsigned int)&(__heap_start__);
+	while(heap_index < (unsigned int)&(__heap_limit__))
+	{
+		malloc_metadata = (malloc_metadata_t*)heap_index;
+		if(malloc_metadata->status == MALLOC_STATUS_OCCUPIED)
+		{
+			//Block is allocated nothing to do. Move to next block
+			heap_index += (sizeof(malloc_metadata_t) + malloc_metadata->size);
+		}
+		else if(malloc_metadata->status == MALLOC_STATUS_FREE)
+		{
+			uart_printf("\nStart free block address : %x",malloc_metadata);
+			//Move to next block. To check if it is free
+			//malloc_metadata - holds current free block
+			//malloc_metadata_nextfreeblock - holds next block if it is free
+			heap_index += (sizeof(malloc_metadata_t) + malloc_metadata->size);
+			malloc_metadata_nextfreeblock = (malloc_metadata_t*)heap_index;
+			while(malloc_metadata_nextfreeblock->status == MALLOC_STATUS_FREE)
+			{
+				malloc_metadata->size += (malloc_metadata_nextfreeblock->size + sizeof(malloc_metadata_t));
+				//Move to next block
+				heap_index += (sizeof(malloc_metadata_t) + malloc_metadata_nextfreeblock->size);
+				malloc_metadata_nextfreeblock = (malloc_metadata_t*)heap_index;
+			}
+		}
+	}
 }
 
 
-
-
+//UART command parser
+void serial_command_parse(char* cmd, int cmd_length)
+{
+	if((strncmp(cmd,"ble",3)) == 1)
+	{
+		uart_printf("\nReceived bluetooth command");
+		if((strncmp(&cmd[4],"send",4)) == 1)
+		{
+			
+		}
+		else if((strncmp(&cmd[4],"recv",4)) == 1)
+		{
+			
+		}
+	}
+}
 
 

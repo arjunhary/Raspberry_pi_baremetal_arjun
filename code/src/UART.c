@@ -4,6 +4,8 @@
 #include "./../include/interrupts.h"
 #include "./../include/utility.h"
 #include "./../include/synchronization.h"
+#include "./../include/arm_utility.h"
+
 
 #include <stdarg.h>
 
@@ -158,7 +160,7 @@ void uart_printf(char* print_str,...)
 	}
 		
 	va_end(arguments);
-	//Enter UART critical section
+	//Exit UART critical section
 	exit_critical_section(&uart_mutex);
 
 }
@@ -566,5 +568,32 @@ void uart_printf_tests(void)
 	uart_printf("unsigned number : %u\n", 123456789);
 	uart_printf("unsigned number : %u\n", -100);
 	uart_printf("char : %c\t , Number: %d\t , hex: %x\t, string: %s\n",'A',5000,5000,"abcdef");
+}
 
+void uart_get_command(char* cmd, int buffer_size , int* length)
+{
+	int char_count = 0;
+	int status  = 0;
+	unsigned char ch = '0';
+	uart_printf("\n>");
+	while(1)
+	{
+		status = uart_recvchar(&ch,3000);
+		if(status == -1)
+		{
+			//No character received
+			continue;
+		}
+		else if((status == 0) && (char_count < buffer_size) && ((int)ch != 13))
+		{
+			cmd[char_count] = ch;
+			char_count++;
+		}
+		else if((int)ch == 13)
+		{
+			//User pressed enter key			
+			*length  = char_count--;
+			return;
+		}
+	}
 }

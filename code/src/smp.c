@@ -4,6 +4,7 @@
 #include "./../include/utility.h"
 #include "./../include/arm_utility.h"
 #include "./../include/sysconfig.h"
+#include "./../include/fifo.h"
 #include "./../include/synchronization.h"
 
 
@@ -11,11 +12,17 @@
 int core_to_execute = 0;
 int shared_int = 0;
 extern int mutex;
+extern fifo_t fifo;
+int signal = 0;
+#define FIFO_LOOP_COUNT 200
 
 void core0_function(void)
 {
+	sem_inc(&signal);
+	fifo_producer(&fifo,FIFO_LOOP_COUNT);
 	while(1)
 	{
+		dummy(0);
 		/*if(Get_current_coreid() == core_to_execute)
 		{
 			#ifdef UART_PRINT_COREID
@@ -29,11 +36,11 @@ void core0_function(void)
 		else
 		{
 			wfe();
-		}*/
+		}
 		enter_critical_section(&mutex);
 		uart_printf("\nCore ID: %d , Number: %d", Get_current_coreid(),shared_int);
 		shared_int++;
-		exit_critical_section(&mutex);
+		exit_critical_section(&mutex);*/
 		
 	}
 }
@@ -48,8 +55,10 @@ void core0_idleloop(void)
 
 void core1_function(void)
 {
+	fifo_consumer(&fifo,FIFO_LOOP_COUNT*2);
 	while(1)
 	{
+		dummy(0);
 		/*if(Get_current_coreid() == core_to_execute)
 		{
 			#ifdef UART_PRINT_COREID
@@ -64,19 +73,21 @@ void core1_function(void)
 		else
 		{
 			wfe();
-		}*/
+		}
 		enter_critical_section(&mutex);
 		uart_printf("\nCore ID: %d , Number: %d", Get_current_coreid(),shared_int);
 		shared_int++;
-		exit_critical_section(&mutex);
+		exit_critical_section(&mutex);*/
 	}
 }
 
 void core2_function(void)
 {
-
+	sem_dec(&signal);
+	fifo_producer(&fifo,FIFO_LOOP_COUNT);
 	while(1)
 	{
+		dummy(0);
 		/*if(Get_current_coreid() == core_to_execute)
 		{
 			#ifdef UART_PRINT_COREID
@@ -91,11 +102,11 @@ void core2_function(void)
 		else
 		{
 			wfe();
-		}*/
+		}
 		enter_critical_section(&mutex);
 		uart_printf("\nCore ID: %d , Number: %d", Get_current_coreid(),shared_int);
 		shared_int++;
-		exit_critical_section(&mutex);
+		exit_critical_section(&mutex);*/
 	}
 }
 
@@ -103,6 +114,7 @@ void core3_function(void)
 {
 	while(1)
 	{
+		dummy(0);
 		/*if(Get_current_coreid() == core_to_execute)
 		{
 			#ifdef UART_PRINT_COREID
@@ -117,11 +129,11 @@ void core3_function(void)
 		else
 		{
 			wfe();
-		}*/
+		}
 		enter_critical_section(&mutex);
 		uart_printf("\nCore ID: %d , Number: %d", Get_current_coreid(),shared_int);
 		shared_int++;
-		exit_critical_section(&mutex);
+		exit_critical_section(&mutex);*/
 	}
 }
 

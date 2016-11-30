@@ -7,6 +7,7 @@ void enter_critical_section(int*lock);
 void exit_critical_section(int* lock);
 void sem_inc(int* lock);
 void sem_dec(int* lock);
+void sem_init(int* lock, unsigned int value);
 void init_critical_section(void);
 
 

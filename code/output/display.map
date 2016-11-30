@@ -1,0 +1,676 @@
+
+Allocating common symbols
+Common symbol       size              file
+
+font_header         0x8               obj/display.o
+TFT_Screen_frambuffer
+                    0x38404           obj/display.o
+DMA_CB              0x40              obj/DMA.o
+TFT_Screen_frambuffer_test
+                    0x200             obj/display.o
+uart_buf            0x84              obj/utility.o
+fifo                0x19c             obj/fifo.o
+i2c_status          0x80              obj/I2C.o
+domain_access_values
+                    0x1               obj/arm_utility.o
+malloc_status       0x4               obj/arm_utility.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+RAM              0x00008000         0x10000000
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+LOAD obj/vectors.o
+LOAD obj/arm_utility.o
+LOAD obj/display.o
+LOAD obj/utility.o
+LOAD obj/SPI.o
+LOAD obj/I2C.o
+LOAD obj/Ft6206_cap_touch.o
+LOAD obj/UART.o
+LOAD obj/Interrupts.o
+LOAD obj/DMA.o
+LOAD obj/synchronization.o
+LOAD obj/smp.o
+LOAD obj/mmu.o
+LOAD obj/fifo.o
+LOAD obj/bluefruit.o
+LOAD obj/main.o
+                0x01000000                __heap_size__ = 0x1000000
+                0x00080000                __stack_size__ = 0x80000
+                0x00200000                __kernel_size__ = 0x200000
+
+.text           0x00008000     0x8ac0
+                0x00008000                __text_start__ = .
+ *(.text*)
+ .text          0x00008000      0x100 obj/vectors.o
+                0x00008000                _start
+                0x0000808c                start_secondary_core
+ .text          0x00008100      0x214 obj/arm_utility.o
+                0x00008100                PUT32
+                0x00008108                GET32
+                0x00008110                dummy
+                0x00008118                SET_BREAKPOINT
+                0x00008120                instructionsyncbarrier
+                0x00008128                datamembarrier
+                0x00008130                wfe
+                0x00008138                datasyncbarrier
+                0x00008140                wfi
+                0x00008148                sev
+                0x00008150                print_arm_sys_ctrl_register
+                0x00008160                print_arm_aux_ctrl_register
+                0x00008170                Read_Multiprocessor_affinity_register
+                0x00008178                Get_current_coreid
+                0x00008184                Read_Interrupt_status_Register
+                0x0000818c                Read_Watchpoint_control_Register0
+                0x00008194                Read_Breakpoint_control_Register0
+                0x0000819c                Read_CPSR_Register
+                0x000081a4                Read_ARM_Auxiliary_Control_Register
+                0x000081ac                Read_ARM_System_Control_Register
+                0x000081b4                Read_Instruction_Fault_Status_Register
+                0x000081bc                Read_Data_Fault_Status_Register
+                0x000081c4                invalidate_tlb
+                0x000081d0                invalidate_caches
+                0x000081dc                enable_instruction_cache
+                0x000081ec                enable_L1_cache
+                0x000081fc                enable_L2_cache
+                0x0000820c                enable_mmu
+                0x0000821c                enable_mmu_caches_branch_prediction
+                0x00008234                disable_mmu
+                0x00008244                disable_mmu_caches_branch_prediction
+                0x0000825c                set_domain
+                0x00008264                write_translation_table_base_register
+                0x00008270                print_arm_registers
+                0x000082ec                print_coreid
+                0x00008300                ldrex
+                0x00008308                strex
+ .text          0x00008314      0xb98 obj/display.o
+                0x00008314                get_font_header
+                0x00008370                init_frame_buffer
+                0x00008390                ili9341_get_font_height
+                0x000083a0                ili9341_get_font_width
+                0x000083b0                ili9341_get_width
+                0x000083c0                ili9341_get_height
+                0x000083d0                ili9341_getid
+                0x00008400                ili9341_turn_display_off
+                0x0000842c                ili9341_init_tft_display
+                0x000084f4                ili9341_set_screen_rotation
+                0x00008608                ili9341_set_vertical_scrolling_definition
+                0x00008670                ili9341_set_vertical_scrolling_set_start_addr
+                0x000086b8                ili9341_scroll
+                0x000086f0                ili9341_set_addr_window
+                0x000087b8                ili9341_get_screen_memory
+                0x000087f8                ili9341_update_display
+                0x00008854                ili9341_load_image
+                0x00008900                ili9341_print_char
+                0x00008b60                ili9341_print_string
+                0x00008c00                calculate_number_of_bytes_per_line
+                0x00008c30                ili9341_fill_color
+                0x00008c88                ili9341_print_string_newline
+                0x00008e40                ili9341_fill_color_dma
+                0x00008e50                ili9341_tests
+ .text          0x00008eac     0x1310 obj/utility.o
+                0x00008eac                factorial
+                0x00008ef4                strncmp
+                0x00008f94                strlen
+                0x00008fbc                strcmp
+                0x00009030                arm_jtag_init
+                0x000090e4                BRANCHTO
+                0x000090ec                memcmp
+                0x00009270                memcpy
+                0x000093e0                memfill_pattern
+                0x00009428                memset
+                0x00009518                get_current_time
+                0x0000959c                calculate_execution_time
+                0x000095c4                time_sleep
+                0x00009600                time_sleep_us
+                0x00009634                LEDInit
+                0x00009678                LEDTurnon
+                0x000096b8                LEDTurnoff
+                0x000096f8                LED_fastblink
+                0x00009718                get_memory_alignment
+                0x00009748                memory_alignment_tests
+                0x000097ec                memory_tests
+                0x000099ac                cache_test
+                0x00009a30                string_tests
+                0x00009cbc                sizeof_tests
+                0x00009d2c                print_heap_size
+                0x00009d50                malloc_init
+                0x00009d94                print_malloc_blocks
+                0x00009e00                malloc
+                0x00009e90                free
+                0x00009ef4                malloc_garbage_collect
+                0x00009fa8                malloc_tests
+                0x0000a150                serial_command_parse
+ .text          0x0000a1bc      0x5fc obj/SPI.o
+                0x0000a1bc                spi_init
+                0x0000a2ac                set_DC_low_for_command
+                0x0000a2e8                set_DC_high_for_data
+                0x0000a324                stop_spi_transfer
+                0x0000a348                spi_dma_enable_and_adcs
+                0x0000a394                spi_dma_disable_and_adcs
+                0x0000a3d4                start_spi_transfer
+                0x0000a418                spi_sendreadcommand
+                0x0000a4e8                wait_for_transfer_complete
+                0x0000a514                wait_till_rx_fifo_has_data
+                0x0000a540                wait_till_tx_fifo_not_full
+                0x0000a56c                spi_sendcommand
+                0x0000a61c                spi_sendbytes
+                0x0000a694                spi_getbytes
+ .text          0x0000a7b8      0x7a4 obj/I2C.o
+                0x0000a7b8                check_for_i2c_error
+                0x0000a7ec                i2c_enable
+                0x0000a834                start_write_transfer
+                0x0000a87c                start_read_transfer
+                0x0000a8c8                set_data_delay
+                0x0000a904                clear_fifos
+                0x0000a940                clear_status_register
+                0x0000a970                i2c_set_clk_div
+                0x0000a9a8                i2c_init
+                0x0000aa00                i2c_set_data_len
+                0x0000aa38                i2c_get_data_len
+                0x0000aa54                i2c_set_slave_addr
+                0x0000aa94                i2c_put_data_byte
+                0x0000aaa4                i2c_get_data_byte
+                0x0000aac4                i2c_stop_transfer
+                0x0000ab10                i2c_scan
+                0x0000abac                i2c_write
+                0x0000ac7c                i2c_write_reg
+                0x0000ad88                wait_till_tx_fifo_can_accept_data
+                0x0000adb4                wait_till_transfer_done
+                0x0000ade0                wait_till_rx_fifo_contains_data
+                0x0000ae54                i2c_read
+                0x0000af18                i2c_read_reg
+ .text          0x0000af5c      0x89c obj/Ft6206_cap_touch.o
+                0x0000af5c                FT6206_get_id
+                0x0000afb4                FT6206_get_chip_select
+                0x0000aff8                FT6206_get_period_active_mode
+                0x0000b03c                FT6206_get_gesture_id
+                0x0000b080                FT6206_get_control
+                0x0000b0c4                FT6206_get_power_mode
+                0x0000b108                FT6206_get_interrupt_mode
+                0x0000b14c                FT6206_set_interrupt_mode
+                0x0000b1d8                FT6206_get_current_operating_state
+                0x0000b21c                FT6206_set_control
+                0x0000b2a8                FT6206_get_device_mode
+                0x0000b2f0                FT6206_set_device_mode
+                0x0000b37c                FT6206_set_threshold
+                0x0000b414                FT6206_get_touch_point_1
+                0x0000b53c                FT6206_get_touch_point_2
+                0x0000b650                FT6206_get_num_touches
+                0x0000b78c                FT6206_tests
+ .text          0x0000b7f8      0xd24 obj/UART.o
+                0x0000b7f8                calc_checksum
+                0x0000b82c                init_uart_buf
+                0x0000b84c                uart_recvchar
+                0x0000b8e4                uart_putchar
+                0x0000b948                uart_print_string
+                0x0000b994                uart_print_string_newline
+                0x0000b9f0                uart_print_number_int_hex
+                0x0000bbb4                uart_print_unsigned_number
+                0x0000bcb0                uart_print_number
+                0x0000bdc4                uart_printf
+                0x0000bf58                wait_till_transmitter_done
+                0x0000bf88                UART_disable_transmitter_and_receiver
+                0x0000bfc8                UART_enable_transmitter_and_receiver
+                0x0000c008                UART_clear_FIFOs
+                0x0000c04c                UARTInit
+                0x0000c150                xmodem_send
+                0x0000c18c                flush_uart_rx_buffer
+                0x0000c1b0                xmodem_recv
+                0x0000c33c                uart_tests
+                0x0000c378                uart_printf_tests
+                0x0000c494                uart_get_command
+ .text          0x0000c51c      0x500 obj/Interrupts.o
+                0x0000c51c                enable_irq
+                0x0000c52c                enable_fiq
+                0x0000c53c                data_abort_handler
+                0x0000c540                disable_system_timer_interrupt
+                0x0000c580                is_system_timer_interrupt_pending
+                0x0000c598                is_gpio_interrupt_pending
+                0x0000c5b8                enable_system_timer_irq_interrupt
+                0x0000c650                enable_Ft6206_touch_screen_i2c_interrupt
+                0x0000c6e8                disable_Ft6206_touch_screen_i2c_interrupt
+                0x0000c728                enable_system_timer_fiq_interrupt
+                0x0000c7d4                c_fiq_handler
+                0x0000c86c                c_irq_handler
+                0x0000c904                polled_sys_timer_interrupt_handler
+                0x0000c9ac                polled_Ft6206_irq_handler
+ .text          0x0000ca1c      0x5d0 obj/DMA.o
+                0x0000ca1c                DMA_wait_for_transfer_complete
+                0x0000caf4                DMA_channel_reset
+                0x0000cb98                DMA_Start_transfer
+                0x0000cc3c                DMA_setup_CB
+                0x0000cd9c                DMA_SPI_Write_test
+                0x0000ceb0                DMA_test
+ .text          0x0000cfec      0x23c obj/synchronization.o
+                0x0000cfec                init_critical_section
+                0x0000d000                enter_critical_section
+                0x0000d034                sem_dec
+                0x0000d08c                exit_critical_section
+                0x0000d0c0                sem_inc
+                0x0000d10c                sem_init
+                0x0000d114                ex_tests
+ .text          0x0000d228      0x180 obj/smp.o
+                0x0000d228                core0_function
+                0x0000d254                core1_function
+                0x0000d274                core2_function
+                0x0000d2a0                core3_function
+                0x0000d2b0                core0_idleloop
+                0x0000d2b8                multicore_init
+                0x0000d360                sysinit_secondary
+ .text          0x0000d3a8      0x1a0 obj/mmu.o
+                0x0000d3a8                init_page_table
+                0x0000d464                mmu_init
+ .text          0x0000d548      0x320 obj/fifo.o
+                0x0000d548                fifo_init
+                0x0000d57c                is_fifo_empty
+                0x0000d59c                is_fifo_full
+                0x0000d5c8                fifo_push
+                0x0000d65c                fifo_pop
+                0x0000d6ec                print_fifo
+                0x0000d738                fifo_producer
+                0x0000d7a0                fifo_consumer
+ .text          0x0000d868      0x34c obj/bluefruit.o
+                0x0000d868                get_at_cmd_response
+                0x0000da1c                send_at_command
+                0x0000dabc                send_uart_message
+                0x0000db6c                bluefruit_init
+ .text          0x0000dbb4       0x88 obj/main.o
+                0x0000dbb4                init_all
+                0x0000dc00                notmain
+ *(.rodata)
+ .rodata        0x0000dc3c     0x20f0 obj/display.o
+                0x0000dc3c                Terminal12x16
+                0x0000f62c                Arial11x14
+ .rodata        0x0000fd2c        0xa obj/UART.o
+ *(.rodata.*)
+ *fill*         0x0000fd36        0x2 
+ .rodata.str1.4
+                0x0000fd38       0xb4 obj/arm_utility.o
+ .rodata.str1.4
+                0x0000fdec      0x3d4 obj/utility.o
+                                0x3d8 (size before relaxing)
+ .rodata.str1.4
+                0x000101c0      0x15d obj/Ft6206_cap_touch.o
+ *fill*         0x0001031d        0x3 
+ .rodata.str1.4
+                0x00010320      0x15f obj/UART.o
+ *fill*         0x0001047f        0x1 
+ .rodata.str1.4
+                0x00010480       0x77 obj/DMA.o
+ *fill*         0x000104f7        0x1 
+ .rodata.str1.4
+                0x000104f8       0xf7 obj/synchronization.o
+ *fill*         0x000105ef        0x1 
+ .rodata.str1.4
+                0x000105f0       0x23 obj/smp.o
+ *fill*         0x00010613        0x1 
+ .rodata.str1.4
+                0x00010614       0x7d obj/fifo.o
+ *fill*         0x00010691        0x3 
+ .rodata.str1.4
+                0x00010694      0x3e2 obj/bluefruit.o
+ *fill*         0x00010a76        0x2 
+ .rodata.str1.4
+                0x00010a78       0x44 obj/main.o
+                                 0x41 (size before relaxing)
+                0x00010abc                __text_end__ = .
+                0x00010ac0                . = ALIGN (0x8)
+ *fill*         0x00010abc        0x4 
+                0x00008abc                __text_size__ = (__text_end__ - __text_start__)
+
+.glue_7         0x00010ac0        0x0
+ .glue_7        0x00010ac0        0x0 linker stubs
+
+.glue_7t        0x00010ac0        0x0
+ .glue_7t       0x00010ac0        0x0 linker stubs
+
+.vfp11_veneer   0x00010ac0        0x0
+ .vfp11_veneer  0x00010ac0        0x0 linker stubs
+
+.v4_bx          0x00010ac0        0x0
+ .v4_bx         0x00010ac0        0x0 linker stubs
+
+.iplt           0x00010ac0        0x0
+ .iplt          0x00010ac0        0x0 obj/vectors.o
+
+.rel.dyn        0x00010ac0        0x0
+ .rel.iplt      0x00010ac0        0x0 obj/vectors.o
+
+.data           0x00010ac0       0xd8
+                0x00010ac0                __data_start__ = .
+ *(.data .data.*)
+ .data          0x00010ac0        0x0 obj/vectors.o
+ .data          0x00010ac0        0x0 obj/arm_utility.o
+ .data          0x00010ac0       0x38 obj/display.o
+                0x00010ac0                font_data
+                0x00010ac4                font_height
+                0x00010ac8                font_width
+                0x00010acc                color_rgb_values
+                0x00010af0                time_ms
+                0x00010af4                test_id
+ .data          0x00010af8        0x0 obj/utility.o
+ .data          0x00010af8        0x0 obj/SPI.o
+ .data          0x00010af8        0x0 obj/I2C.o
+ .data          0x00010af8        0x0 obj/Ft6206_cap_touch.o
+ .data          0x00010af8        0x4 obj/UART.o
+                0x00010af8                uart_mutex
+ .data          0x00010afc        0x0 obj/Interrupts.o
+ .data          0x00010afc        0x0 obj/DMA.o
+ .data          0x00010afc        0x4 obj/synchronization.o
+                0x00010afc                mutex
+ .data          0x00010b00        0x0 obj/smp.o
+ .data          0x00010b00        0x0 obj/mmu.o
+ .data          0x00010b00        0x0 obj/fifo.o
+ .data          0x00010b00       0x94 obj/bluefruit.o
+                0x00010b00                bluefruit_at_commands
+ .data          0x00010b94        0x0 obj/main.o
+                0x00010b98                . = ALIGN (0x8)
+ *fill*         0x00010b94        0x4 
+                0x00010b98                __data_end__ = .
+                0x000000d8                __data_size__ = (__data_end__ - __data_start__)
+                0x00010b98                __exidx_start = .
+
+.igot.plt       0x00010b98        0x0
+ .igot.plt      0x00010b98        0x0 obj/vectors.o
+
+.ARM.exidx
+ *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+                0x00010b98                . = ALIGN (0x8)
+                0x00010b98                __exidx_end = .
+
+.bss            0x00014000    0x4c900
+                0x00014000                __bss_start__ = .
+ *(.bss .bss.*)
+ .bss           0x00014000        0x0 obj/vectors.o
+ .bss           0x00014000        0x0 obj/arm_utility.o
+ .bss           0x00014000       0x16 obj/display.o
+                0x00014000                TFT_Screen_width
+                0x00014002                TFT_Screen_height
+                0x00014004                TFT_Screen_dirty_x0
+                0x00014006                TFT_Screen_dirty_y0
+                0x00014008                TFT_Screen_dirty_x1
+                0x0001400a                TFT_Screen_dirty_y1
+                0x0001400c                dirty_x
+                0x0001400e                dirty_y
+                0x00014010                scroll_mode
+                0x00014014                scroll_height
+ .bss           0x00014016        0x0 obj/utility.o
+ .bss           0x00014016        0x0 obj/SPI.o
+ .bss           0x00014016        0x0 obj/I2C.o
+ .bss           0x00014016        0xc obj/Ft6206_cap_touch.o
+                0x00014016                pressure_1
+                0x00014018                touch_y1
+                0x0001401a                touch_x1
+                0x0001401c                pressure_0
+                0x0001401e                touch_y0
+                0x00014020                touch_x0
+ .bss           0x00014022        0x0 obj/UART.o
+ *fill*         0x00014022        0x2 
+ .bss           0x00014024        0xc obj/Interrupts.o
+ .bss           0x00014030        0x4 obj/DMA.o
+                0x00014030                spi_dummy_receive
+ .bss           0x00014034        0x0 obj/synchronization.o
+ .bss           0x00014034        0xc obj/smp.o
+                0x00014034                signal
+                0x00014038                shared_int
+                0x0001403c                core_to_execute
+ *fill*         0x00014040     0x3fc0 
+ .bss           0x00018000    0x10000 obj/mmu.o
+ .bss           0x00028000        0x8 obj/fifo.o
+                0x00028000                numbuff_consumer
+                0x00028004                numbuff_producer
+ .bss           0x00028008        0x0 obj/bluefruit.o
+ .bss           0x00028008        0x0 obj/main.o
+ *(COMMON)
+ COMMON         0x00028008        0x8 obj/arm_utility.o
+                0x00028008                domain_access_values
+                0x0002800c                malloc_status
+ COMMON         0x00028010    0x3860c obj/display.o
+                0x00028010                font_header
+                0x00028018                TFT_Screen_frambuffer
+                0x0006041c                TFT_Screen_frambuffer_test
+ COMMON         0x0006061c       0x84 obj/utility.o
+                0x0006061c                uart_buf
+ COMMON         0x000606a0       0x80 obj/I2C.o
+                0x000606a0                i2c_status
+ COMMON         0x00060720       0x40 obj/DMA.o
+                0x00060720                DMA_CB
+ COMMON         0x00060760      0x19c obj/fifo.o
+                0x00060760                fifo
+                0x00060900                . = ALIGN (0x8)
+ *fill*         0x000608fc        0x4 
+                0x00060900                __bss_end__ = .
+                0x0004c900                __bss_size__ = (__bss_end__ - __bss_start__)
+
+.stack          0x00200000    0x80000
+                0x00200000                . = ALIGN (0x8)
+                0x00200000                __stack_start__ = .
+ *(.stack*)
+                0x00280000                . = (. + __stack_size__)
+ *fill*         0x00200000    0x80000 
+                0x00280000                . = ALIGN (0x8)
+                0x00280000                __stack_limit__ = .
+
+.heap           0x00280000  0x1000000
+                0x00280000                . = ALIGN (0x8)
+                0x00280000                __heap_start__ = .
+ *(.heap*)
+                0x01280000                . = (. + __heap_size__)
+ *fill*         0x00280000  0x1000000 deadbeef
+                0x01280000                . = ALIGN (0x8)
+                0x01280000                __heap_limit__ = .
+OUTPUT(./output/display.elf elf32-littlearm)
+
+.ARM.attributes
+                0x00000000       0x37
+ .ARM.attributes
+                0x00000000       0x14 obj/vectors.o
+ .ARM.attributes
+                0x00000014       0x3b obj/arm_utility.o
+ .ARM.attributes
+                0x0000004f       0x3b obj/display.o
+ .ARM.attributes
+                0x0000008a       0x3b obj/utility.o
+ .ARM.attributes
+                0x000000c5       0x3b obj/SPI.o
+ .ARM.attributes
+                0x00000100       0x3b obj/I2C.o
+ .ARM.attributes
+                0x0000013b       0x3b obj/Ft6206_cap_touch.o
+ .ARM.attributes
+                0x00000176       0x3b obj/UART.o
+ .ARM.attributes
+                0x000001b1       0x3b obj/Interrupts.o
+ .ARM.attributes
+                0x000001ec       0x3b obj/DMA.o
+ .ARM.attributes
+                0x00000227       0x3b obj/synchronization.o
+ .ARM.attributes
+                0x00000262       0x3b obj/smp.o
+ .ARM.attributes
+                0x0000029d       0x3b obj/mmu.o
+ .ARM.attributes
+                0x000002d8       0x3b obj/fifo.o
+ .ARM.attributes
+                0x00000313       0x3b obj/bluefruit.o
+ .ARM.attributes
+                0x0000034e       0x3b obj/main.o
+
+.comment        0x00000000       0x6e
+ .comment       0x00000000       0x6e obj/arm_utility.o
+                                 0x6f (size before relaxing)
+ .comment       0x0000006e       0x6f obj/display.o
+ .comment       0x0000006e       0x6f obj/utility.o
+ .comment       0x0000006e       0x6f obj/SPI.o
+ .comment       0x0000006e       0x6f obj/I2C.o
+ .comment       0x0000006e       0x6f obj/Ft6206_cap_touch.o
+ .comment       0x0000006e       0x6f obj/UART.o
+ .comment       0x0000006e       0x6f obj/Interrupts.o
+ .comment       0x0000006e       0x6f obj/DMA.o
+ .comment       0x0000006e       0x6f obj/synchronization.o
+ .comment       0x0000006e       0x6f obj/smp.o
+ .comment       0x0000006e       0x6f obj/mmu.o
+ .comment       0x0000006e       0x6f obj/fifo.o
+ .comment       0x0000006e       0x6f obj/bluefruit.o
+ .comment       0x0000006e       0x6f obj/main.o
+
+.debug_info     0x00000000    0x44f95
+ .debug_info    0x00000000      0x859 obj/arm_utility.o
+ .debug_info    0x00000859    0x397ab obj/display.o
+ .debug_info    0x0003a004     0x2126 obj/utility.o
+ .debug_info    0x0003c12a     0x15bd obj/SPI.o
+ .debug_info    0x0003d6e7     0x1218 obj/I2C.o
+ .debug_info    0x0003e8ff     0x11b9 obj/Ft6206_cap_touch.o
+ .debug_info    0x0003fab8     0x16d1 obj/UART.o
+ .debug_info    0x00041189     0x16fc obj/Interrupts.o
+ .debug_info    0x00042885      0xbba obj/DMA.o
+ .debug_info    0x0004343f      0x4ea obj/synchronization.o
+ .debug_info    0x00043929      0x453 obj/smp.o
+ .debug_info    0x00043d7c      0x383 obj/mmu.o
+ .debug_info    0x000440ff      0x5f0 obj/fifo.o
+ .debug_info    0x000446ef      0x610 obj/bluefruit.o
+ .debug_info    0x00044cff      0x296 obj/main.o
+
+.debug_abbrev   0x00000000     0x219d
+ .debug_abbrev  0x00000000      0x1a9 obj/arm_utility.o
+ .debug_abbrev  0x000001a9      0x395 obj/display.o
+ .debug_abbrev  0x0000053e      0x487 obj/utility.o
+ .debug_abbrev  0x000009c5      0x30b obj/SPI.o
+ .debug_abbrev  0x00000cd0      0x304 obj/I2C.o
+ .debug_abbrev  0x00000fd4      0x1fb obj/Ft6206_cap_touch.o
+ .debug_abbrev  0x000011cf      0x357 obj/UART.o
+ .debug_abbrev  0x00001526      0x283 obj/Interrupts.o
+ .debug_abbrev  0x000017a9      0x226 obj/DMA.o
+ .debug_abbrev  0x000019cf      0x128 obj/synchronization.o
+ .debug_abbrev  0x00001af7      0x155 obj/smp.o
+ .debug_abbrev  0x00001c4c      0x111 obj/mmu.o
+ .debug_abbrev  0x00001d5d      0x1ca obj/fifo.o
+ .debug_abbrev  0x00001f27      0x143 obj/bluefruit.o
+ .debug_abbrev  0x0000206a      0x133 obj/main.o
+
+.debug_loc      0x00000000     0x4524
+ .debug_loc     0x00000000      0x2da obj/arm_utility.o
+ .debug_loc     0x000002da      0x9d1 obj/display.o
+ .debug_loc     0x00000cab     0x14fc obj/utility.o
+ .debug_loc     0x000021a7      0x33c obj/SPI.o
+ .debug_loc     0x000024e3      0x5b8 obj/I2C.o
+ .debug_loc     0x00002a9b      0x1b9 obj/Ft6206_cap_touch.o
+ .debug_loc     0x00002c54      0x9bf obj/UART.o
+ .debug_loc     0x00003613       0xae obj/Interrupts.o
+ .debug_loc     0x000036c1      0x592 obj/DMA.o
+ .debug_loc     0x00003c53      0x13c obj/synchronization.o
+ .debug_loc     0x00003d8f       0xc5 obj/smp.o
+ .debug_loc     0x00003e54       0xea obj/mmu.o
+ .debug_loc     0x00003f3e      0x3cb obj/fifo.o
+ .debug_loc     0x00004309      0x21b obj/bluefruit.o
+
+.debug_aranges  0x00000000      0x1e0
+ .debug_aranges
+                0x00000000       0x20 obj/arm_utility.o
+ .debug_aranges
+                0x00000020       0x20 obj/display.o
+ .debug_aranges
+                0x00000040       0x20 obj/utility.o
+ .debug_aranges
+                0x00000060       0x20 obj/SPI.o
+ .debug_aranges
+                0x00000080       0x20 obj/I2C.o
+ .debug_aranges
+                0x000000a0       0x20 obj/Ft6206_cap_touch.o
+ .debug_aranges
+                0x000000c0       0x20 obj/UART.o
+ .debug_aranges
+                0x000000e0       0x20 obj/Interrupts.o
+ .debug_aranges
+                0x00000100       0x20 obj/DMA.o
+ .debug_aranges
+                0x00000120       0x20 obj/synchronization.o
+ .debug_aranges
+                0x00000140       0x20 obj/smp.o
+ .debug_aranges
+                0x00000160       0x20 obj/mmu.o
+ .debug_aranges
+                0x00000180       0x20 obj/fifo.o
+ .debug_aranges
+                0x000001a0       0x20 obj/bluefruit.o
+ .debug_aranges
+                0x000001c0       0x20 obj/main.o
+
+.debug_line     0x00000000     0x1cec
+ .debug_line    0x00000000       0xfd obj/arm_utility.o
+ .debug_line    0x000000fd      0x398 obj/display.o
+ .debug_line    0x00000495      0x629 obj/utility.o
+ .debug_line    0x00000abe      0x1e6 obj/SPI.o
+ .debug_line    0x00000ca4      0x207 obj/I2C.o
+ .debug_line    0x00000eab      0x1a5 obj/Ft6206_cap_touch.o
+ .debug_line    0x00001050      0x3aa obj/UART.o
+ .debug_line    0x000013fa      0x1a1 obj/Interrupts.o
+ .debug_line    0x0000159b      0x179 obj/DMA.o
+ .debug_line    0x00001714       0xd6 obj/synchronization.o
+ .debug_line    0x000017ea       0xf3 obj/smp.o
+ .debug_line    0x000018dd       0xee obj/mmu.o
+ .debug_line    0x000019cb      0x125 obj/fifo.o
+ .debug_line    0x00001af0      0x126 obj/bluefruit.o
+ .debug_line    0x00001c16       0xd6 obj/main.o
+
+.debug_str      0x00000000     0x3dc3
+ .debug_str     0x00000000      0x568 obj/arm_utility.o
+                                0x5b3 (size before relaxing)
+ .debug_str     0x00000568      0xb66 obj/display.o
+                                0xd6d (size before relaxing)
+ .debug_str     0x000010ce      0xa09 obj/utility.o
+                                0xd5f (size before relaxing)
+ .debug_str     0x00001ad7      0x751 obj/SPI.o
+                                0xde5 (size before relaxing)
+ .debug_str     0x00002228      0x494 obj/I2C.o
+                                0x8b6 (size before relaxing)
+ .debug_str     0x000026bc      0x30f obj/Ft6206_cap_touch.o
+                                0x5a9 (size before relaxing)
+ .debug_str     0x000029cb      0x5a4 obj/UART.o
+                                0xb1a (size before relaxing)
+ .debug_str     0x00002f6f      0x59e obj/Interrupts.o
+                                0xaa8 (size before relaxing)
+ .debug_str     0x0000350d      0x554 obj/DMA.o
+                                0x822 (size before relaxing)
+ .debug_str     0x00003a61       0x54 obj/synchronization.o
+                                0x2a4 (size before relaxing)
+ .debug_str     0x00003ab5       0xd9 obj/smp.o
+                                0x34f (size before relaxing)
+ .debug_str     0x00003b8e       0x63 obj/mmu.o
+                                0x317 (size before relaxing)
+ .debug_str     0x00003bf1       0x84 obj/fifo.o
+                                0x32b (size before relaxing)
+ .debug_str     0x00003c75      0x132 obj/bluefruit.o
+                                0x339 (size before relaxing)
+ .debug_str     0x00003da7       0x1c obj/main.o
+                                0x2d1 (size before relaxing)
+
+.debug_frame    0x00000000     0x196c
+ .debug_frame   0x00000000      0x278 obj/arm_utility.o
+ .debug_frame   0x00000278      0x2e8 obj/display.o
+ .debug_frame   0x00000560      0x3c4 obj/utility.o
+ .debug_frame   0x00000924      0x1ec obj/SPI.o
+ .debug_frame   0x00000b10      0x320 obj/I2C.o
+ .debug_frame   0x00000e30      0x21c obj/Ft6206_cap_touch.o
+ .debug_frame   0x0000104c      0x2e0 obj/UART.o
+ .debug_frame   0x0000132c      0x19c obj/Interrupts.o
+ .debug_frame   0x000014c8       0xd4 obj/DMA.o
+ .debug_frame   0x0000159c       0xcc obj/synchronization.o
+ .debug_frame   0x00001668       0xbc obj/smp.o
+ .debug_frame   0x00001724       0x5c obj/mmu.o
+ .debug_frame   0x00001780      0x100 obj/fifo.o
+ .debug_frame   0x00001880       0xa4 obj/bluefruit.o
+ .debug_frame   0x00001924       0x48 obj/main.o
+
+.debug_ranges   0x00000000      0x2b0
+ .debug_ranges  0x00000000       0x38 obj/display.o
+ .debug_ranges  0x00000038      0x170 obj/utility.o
+ .debug_ranges  0x000001a8       0x18 obj/SPI.o
+ .debug_ranges  0x000001c0       0x78 obj/I2C.o
+ .debug_ranges  0x00000238       0x30 obj/UART.o
+ .debug_ranges  0x00000268       0x48 obj/Interrupts.o

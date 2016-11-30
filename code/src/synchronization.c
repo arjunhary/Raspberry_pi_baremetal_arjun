@@ -37,12 +37,12 @@ void enter_critical_section(int* lock)
 void sem_dec(int* lock)
 {
 	int status = -1;
-	int val = -1;
+	volatile int val = -1;
 	do
 	{
 		while(1)
 		{
-			//If semphore value is 0,it is locked. Wait till not 0
+			//If semphore value is 0,it is locked. Wait till not 0			
 			val = ldrex((unsigned int)lock);
 			if(val != SEMAPHORE_LOCKED)
 			{
@@ -54,8 +54,9 @@ void sem_dec(int* lock)
 		//Lock the semaphore by setting it to 0.
 		status = strex((unsigned int)lock,val);	
 	}while(status!=0);
-	
 	datamembarrier();
+	//uart_printf("\nInside semaphore decrement : %d", val);
+	
 }
 
 void exit_critical_section(int* lock)
@@ -78,7 +79,7 @@ void exit_critical_section(int* lock)
 void sem_inc(int* lock)
 {
 	int status = -1;
-	int val = -1;
+	volatile int val = -1;
 	do
 	{
 		val = ldrex((unsigned int)lock);
@@ -86,16 +87,22 @@ void sem_inc(int* lock)
 		val++;
 		//Increment the value of the semaphore
 		status = strex((unsigned int)lock,val);		
-	}while(status != 0);
-	
+	}while(status != 0);	
+	datamembarrier();
+}
+
+void sem_init(int* lock, unsigned int value)
+{
+	*lock = value;
 	datamembarrier();
 }
 
 
-int lock = 500;
-int lock1 = 1000;
+
 void ex_tests(void)
 {
+	int lock = 500;
+	int lock1 = 1000;
 	uart_printf("\nAddress Lock: %x, Lock1 : %x, mutex : %x",&lock,&lock1,&mutex);
 	uart_printf("\nFirst strex status : %d",strex((unsigned int)&lock1,1500));
 	uart_printf("\nLDREX of lock1: %d", ldrex((unsigned int)&lock1));	

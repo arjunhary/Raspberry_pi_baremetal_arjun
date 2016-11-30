@@ -8,6 +8,11 @@ enum{
 	DOMAIN_MANAGER
 }domain_access_values;
 
+void PUT32(unsigned int addr, unsigned int value);
+unsigned int GET32(unsigned int addr);
+void dummy ( unsigned int dummy_value);
+
+
 void SET_BREAKPOINT(void);
 unsigned int Read_ARM_Auxiliary_Control_Register(void);
 unsigned int Read_Watchpoint_control_Register0(void);

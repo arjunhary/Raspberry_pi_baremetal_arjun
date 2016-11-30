@@ -1,3 +1,7 @@
+#ifndef __MINIUART_H__
+#define __MINIUART_H__
+
+
 #define MINI_UART_BASE 0x3F215040
 
 #define UART_BUF_SIZE 132
@@ -35,6 +39,7 @@ void init_uart_buf(void);
 void uart_print_unsigned_number(unsigned int num);
 void uart_printf(char* print_str,...);
 void uart_printf_tests(void);
+void uart_get_command(char* cmd, int buffer_size , int* length);
 
 
 //xmodem enums
@@ -211,3 +216,4 @@ typedef union __attribute__((packed)) _AUX_MU_BAUD_RATE_Reg_t
     unsigned int   mAsU32;
 } AUX_MU_BAUD_RATE_Reg_t;
 
+#endif

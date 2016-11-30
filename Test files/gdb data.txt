@@ -3,6 +3,17 @@ arm-none-eabi-gdb -ex "target remote localhost:3333" display.elf
 .space 0x200000-4,0
 
 	cortex_a dbginit
+	
+.globl PUT32
+PUT32:
+    str r1,[r0]
+    bx lr
+
+.globl GET32
+GET32:
+    ldr r0,[r0]
+    bx lr
+
 
 
 SPI

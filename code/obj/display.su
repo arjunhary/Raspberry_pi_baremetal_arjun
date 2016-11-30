@@ -21,4 +21,4 @@ display.c:591:5:calculate_number_of_bytes_per_line	0	static
 display.c:603:6:ili9341_fill_color	24	static
 display.c:465:5:ili9341_print_string_newline	40	static
 display.c:614:6:ili9341_fill_color_dma	8	static
-display.c:621:6:ili9341_tests	16	static
+display.c:621:6:ili9341_tests	24	static

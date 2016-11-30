@@ -623,9 +623,9 @@ void ili9341_tests(void)
 	//Scren tests
 	get_font_header();
 	//fill whole screen with black
-	get_current_time();
+	uint64_t start_time = get_current_time();
 	ili9341_fill_color(0,0,(ili9341_get_width()-1),(ili9341_get_height()-1),COLOR_BLACK);
-	calculate_execution_time();
+	calculate_execution_time(start_time);
 	/*ili9341_set_vertical_scrolling_definition(0,ili9341_get_height(),0);
 	ili9341_print_string_newline("This is a print test : 1",COLOR_YELLOW);
 	ili9341_print_string_newline("This is a print test : 2",COLOR_RED);

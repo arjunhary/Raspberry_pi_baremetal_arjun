@@ -4,22 +4,22 @@ MEMORY
     RAM : ORIGIN = 0x8000, LENGTH = 0x10000000
 }
 
-/* heap_size = 128M; */
- __heap_size__ = 1M;
- __stack_size__ = 512K; /* stack size is 128K per core for 4 cores */
-
+__heap_size__ = 16M;
+__stack_size__ = 512K; /* stack size is 128K per core for 4 cores */
+__kernel_size__ = 0x200000; /*2MB */
 
 
 SECTIONS
 {
 	.text : { 
+		__text_start__ = .;
 		*(.text*) 
 		*(.rodata)
 		*(.rodata.*)
 		__text_end__ = .;
 		. = ALIGN (8);
 	} > RAM
-	__data_rom_start__ = .;
+	__text_size__ = __text_end__ - __text_start__;
 
 	.data : {
 		__data_start__ = .;
@@ -44,6 +44,15 @@ SECTIONS
 		__bss_end__ = .;
 	} > RAM
 	__bss_size__ = __bss_end__ - __bss_start__;
+			
+	.stack __kernel_size__ : {
+		. = ALIGN(8);
+		__stack_start__ = .;
+		*(.stack*)
+		. += __stack_size__; 
+		. = ALIGN(8);
+		__stack_limit__ = .;
+	} > RAM
 
 	.heap : {
 		. = ALIGN(8);
@@ -52,15 +61,8 @@ SECTIONS
 		. += __heap_size__;
 		. = ALIGN(8);
 		__heap_limit__ = .;
-	} > RAM
+	} > RAM = 0xdeadbeef
 	
-	.stack : {
-		. = ALIGN(8);
-		__stack_start__ = .;
-		*(.stack*)
-		. += __stack_size__;
-		. = ALIGN(8);
-		__stack_limit__ = .;
-	} > RAM
+
 }
  
